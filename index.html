@@ -10,9 +10,25 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
+  <script>document.documentElement.classList.add('access-locked')</script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <section id="accessGate" class="access-gate" aria-labelledby="accessGateTitle">
+    <div class="access-gate-card">
+      <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
+      <p class="access-gate-kicker">CO-WRITER PRO · PRIVATE ALPHA</p>
+      <h1 id="accessGateTitle">Field test access</h1>
+      <p>Enter the access code supplied by the retreat organiser.</p>
+      <form id="accessGateForm">
+        <label for="accessGateCode">Access code</label>
+        <input id="accessGateCode" type="password" inputmode="text" autocomplete="current-password" autocapitalize="none" spellcheck="false" required />
+        <p id="accessGateError" class="access-gate-error" role="alert" aria-live="polite"></p>
+        <button type="submit" class="primary-button">Open notebook</button>
+      </form>
+      <small>Approved devices remember access in this browser.</small>
+    </div>
+  </section>
   <div id="app" class="app-shell page-welcome">
     <section id="welcomePage" class="welcome-page" aria-label="Welcome">
       <header class="welcome-brand">
@@ -185,6 +201,7 @@
     </main>
   </section>
 
+  <script src="access-gate.js"></script>
   <script src="chord-engine.js"></script>
   <script src="structure-engine.js"></script>
   <script src="utility-engine.js"></script>
