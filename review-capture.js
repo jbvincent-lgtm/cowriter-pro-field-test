@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0.5';
+  const VERSION = '0.4.0.7';
   const encoder = new TextEncoder();
   const now = () => new Date().toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));
@@ -28,7 +28,7 @@
       const crc = crc32(data);
       const local = new Uint8Array([80,75,3,4,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(filename.length),0,0,...filename]);
       chunks.push(local, data);
-      const central = new Uint8Array([80,75,1,2,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(filename.length),0,0,0,0,0,0,0,0,0,0,...u32(offset),...filename]);
+      const central = new Uint8Array([80,75,1,2,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(filename.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(offset),...filename]);
       directory.push(central);
       offset += local.length + data.length;
     });
@@ -151,7 +151,7 @@
     function reviewHtml() {
       const shots = session.screenshots.map(item => `<article><h2>${safe(item.filename)}</h2><p>${safe(item.context.page || '')} · ${safe(item.context.view || '')} · ${safe(item.context.songTitle || '')}</p><img src="screenshots/${safe(item.filename)}" alt="${safe(item.filename)}"></article>`).join('');
       const issues = session.issues.map(item => `<li><strong>${safe(item.id)}</strong> ${safe(item.note)} <small>${safe(item.context.view || '')}</small></li>`).join('') || '<li>No issues marked.</li>';
-      return `<!doctype html><meta charset="utf-8"><title>Co-Writer Pro review</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:0 24px;color:#25251f}img{max-width:100%;border:1px solid #ccc}article{margin:40px 0}small{color:#666}</style><h1>Co-Writer Pro review</h1><p>${safe(session.startedAt)} · ${session.screenshots.length} screenshots · ${session.issues.length} issues</p><h2>Issues</h2><ol>${issues}</ol>${shots}`;
+      return `<!doctype html><meta charset="utf-8"><title>Co-Writer review</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:0 24px;color:#25251f}img{max-width:100%;border:1px solid #ccc}article{margin:40px 0}small{color:#666}</style><h1>Co-Writer review</h1><p>${safe(session.startedAt)} · ${session.screenshots.length} screenshots · ${session.issues.length} issues</p><h2>Issues</h2><ol>${issues}</ol>${shots}`;
     }
 
     function exportZip() {
@@ -160,7 +160,7 @@
       const endedAt = now();
       const files = {
         'review.html':reviewHtml(),
-        'summary.md':`# Co-Writer Pro Review\n\n- Version: ${VERSION}\n- Started: ${session.startedAt}\n- Exported: ${endedAt}\n- Screenshots: ${session.screenshots.length}\n- Issues: ${session.issues.length}\n- Workflow events: ${session.workflow.length}\n- Console warnings/errors: ${session.console.length}\n`,
+        'summary.md':`# Co-Writer Review\n\n- Version: ${VERSION}\n- Started: ${session.startedAt}\n- Exported: ${endedAt}\n- Screenshots: ${session.screenshots.length}\n- Issues: ${session.issues.length}\n- Workflow events: ${session.workflow.length}\n- Console warnings/errors: ${session.console.length}\n`,
         'workflow.json':JSON.stringify(session.workflow,null,2),
         'issues.json':JSON.stringify(session.issues,null,2),
         'console-log.txt':session.console.map(item => `[${item.at}] ${item.level.toUpperCase()} ${item.message}`).join('\n') || 'No console warnings or errors captured.\n'
@@ -170,7 +170,7 @@
       const url = URL.createObjectURL(zipStore(files));
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'cowriter-review-session.zip';
+      link.download = 'co-writer-review-session.zip';
       link.click();
       setTimeout(() => URL.revokeObjectURL(url),1000);
       options.notify?.('Review ZIP exported');

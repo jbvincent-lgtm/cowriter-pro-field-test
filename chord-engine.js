@@ -275,6 +275,14 @@
     ];
   }
 
+  function songwriterChords(key, preference) {
+    const parsed = parseKey(key);
+    const numbers = parsed.mode === 'minor'
+      ? ['1m7', 'b3add9', '4m7', '5sus4', 'b6add9', 'b7sus2']
+      : ['1add9', '2m7', '3m7', '4add9', '5sus4', '6m7'];
+    return numbers.map(number => ({ number, chord: nashvilleToChord(number, key, preference) }));
+  }
+
   function sameMode(keyA, keyB) {
     return parseKey(keyA).mode === parseKey(keyB).mode;
   }
@@ -416,6 +424,7 @@
     scaleForKey,
     keyScaleChords,
     borrowedChords,
+    songwriterChords,
     sameMode,
     capoForKeys,
     shapeKeyForCapo,

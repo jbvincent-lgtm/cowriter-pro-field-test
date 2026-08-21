@@ -6,18 +6,18 @@
   <meta name="theme-color" content="#f3f0e8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Co-Writer Pro Private Alpha 0.4.0.5</title>
+  <title>Co-Writer Private Alpha 0.4.0.7</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
   <script>document.documentElement.classList.add('access-locked')</script>
-  <link rel="stylesheet" href="styles.css?v=gate1" />
+  <link rel="stylesheet" href="styles.css?v=0.4.0.7-intro4" />
 </head>
 <body>
   <section id="accessGate" class="access-gate" aria-labelledby="accessGateTitle">
     <div class="access-gate-card">
       <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
-      <p class="access-gate-kicker">CO-WRITER PRO · PRIVATE ALPHA</p>
+      <p class="access-gate-kicker">CO-WRITER · PRIVATE ALPHA</p>
       <h1 id="accessGateTitle">Field test access</h1>
       <p>Enter the access code supplied by the retreat organiser.</p>
       <form id="accessGateForm">
@@ -33,13 +33,13 @@
     <section id="welcomePage" class="welcome-page" aria-label="Welcome">
       <header class="welcome-brand">
         <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
-        <div><div class="wordmark">CO-WRITER PRO</div><div class="alpha-mark">PRIVATE ALPHA</div></div>
+        <div><div class="wordmark">CO-WRITER</div><div class="alpha-mark">PRIVATE ALPHA</div></div>
       </header>
       <main class="welcome-main">
         <div class="welcome-copy">
-          <p class="welcome-kicker">Your songs, in progress.</p>
-          <h1>Return to the place where the song is waiting.</h1>
-          <p class="welcome-note">A quiet notebook for words, harmony and the pieces around them.</p>
+          <p class="welcome-kicker">The page is ready.</p>
+          <h1>Begin with what you have.</h1>
+          <p class="welcome-note">A line, a chord, a title, or a half-finished thought.</p>
         </div>
         <section id="welcomeContinueCard" class="continue-card hidden">
           <span>Continue writing</span>
@@ -48,23 +48,29 @@
           <button type="button" id="welcomeContinue" class="primary-button">Open song</button>
         </section>
         <div class="welcome-actions">
-          <button type="button" id="welcomeNewSong" class="primary-button">New song</button>
-          <button type="button" id="welcomeLibrary" class="ghost-button">Open library</button>
-          <button type="button" id="welcomeMorningLines" class="ghost-button welcome-exercises">Exercises</button>
-          <button type="button" id="welcomeRecordIdea" class="ghost-button welcome-record">● Record an idea</button>
-          <button type="button" id="welcomeInstall" class="ghost-button">Install for offline</button>
-          <button type="button" id="welcomeDemo" class="text-button welcome-secondary">Explore demo</button>
-          <button type="button" id="welcomeImport" class="text-button welcome-secondary">Import</button>
+          <div id="welcomeMainActions" class="welcome-main-actions">
+            <button type="button" id="welcomeNewSong" class="primary-button">New song</button>
+            <button type="button" id="welcomeLibrary" class="ghost-button">Open library</button>
+            <button type="button" id="welcomeGetStarted" class="ghost-button welcome-start-here">Start here</button>
+          </div>
+          <div id="welcomeQuietActions" class="welcome-quiet-actions" aria-label="Other ways to begin">
+            <button type="button" id="welcomeMorningLines" class="text-button welcome-exercises">Exercises</button>
+            <button type="button" id="welcomeRecordIdea" class="text-button welcome-record">● Record an idea</button>
+            <button type="button" id="welcomeMore" class="text-button welcome-secondary">More…</button>
+            <button type="button" id="welcomeInstall" class="ghost-button welcome-overflow-action">Install for offline</button>
+            <button type="button" id="welcomeDemo" class="text-button welcome-secondary welcome-overflow-action">Explore demo</button>
+            <button type="button" id="welcomeImport" class="text-button welcome-secondary welcome-overflow-action">Import</button>
+          </div>
         </div>
       </main>
-      <footer class="welcome-footer"><span>Co-Writer Pro · Private Alpha 0.4.0.5</span><span id="welcomeConnection">Saved on this device</span></footer>
+      <footer class="welcome-footer"><span>Co-Writer · Private Alpha</span><span id="welcomeConnection">Saved on this device</span></footer>
     </section>
 
     <aside id="sidebar" class="sidebar" aria-label="Song library">
       <header class="sidebar-header">
         <button id="libraryHome" class="brand-lockup library-home" title="Welcome">
           <div class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></div>
-          <div><div class="wordmark">CO-WRITER PRO</div><div class="library-heading">Library</div></div>
+          <div><div class="wordmark">CO-WRITER</div><div class="library-heading">Library</div></div>
         </button>
         <div class="library-header-actions">
           <span class="alpha-mark">PRIVATE ALPHA</span>
@@ -100,7 +106,7 @@
       <header class="topbar no-print">
         <div class="topbar-left">
           <button id="expandSidebar" class="icon-button" title="Open library" aria-label="Open library">☰</button>
-          <button id="homeButton" class="topbar-brand" title="Welcome"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER PRO</span></button>
+          <button id="homeButton" class="topbar-brand" title="Welcome"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER</span></button>
           <div id="saveState" class="save-state"></div><div id="fieldStatus" class="field-status">On this device</div>
         </div>
         <nav id="modeNav" class="mode-nav" aria-label="Song views">
@@ -116,13 +122,14 @@
           <button id="undoButton" class="icon-button" title="Undo" aria-label="Undo">↶</button>
           <button id="redoButton" class="icon-button" title="Redo" aria-label="Redo">↷</button>
           <button id="themeToggle" class="icon-button" title="Toggle appearance" aria-label="Toggle appearance">◐</button>
+          <button id="shortcutsButton" class="icon-button shortcuts-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">?</button>
           <button id="songMenu" class="icon-button" title="Song menu" aria-label="Song menu">•••</button>
         </div>
       </header>
 
       <section id="emptyState" class="empty-state hidden">
         <div class="empty-card">
-          <div class="empty-kicker">CO-WRITER PRO</div>
+          <div class="empty-kicker">CO-WRITER</div>
           <h1>Your first song starts with a blank page.</h1>
           <div class="empty-actions"><button id="emptyNewSong" class="primary-button">New song</button><button id="emptyOpenLibrary" class="ghost-button">Open library</button></div>
         </div>
@@ -159,13 +166,13 @@
 
     <aside id="demoGuide" class="demo-guide no-print" aria-label="Demo guide">
       <header class="demo-guide-header">
-        <div><div class="demo-guide-kicker">DEMO GUIDE</div><div id="demoGuideProgress" class="demo-guide-progress">1 of 7</div></div>
+        <div><div class="demo-guide-kicker">DEMO GUIDE</div><div id="demoGuideProgress" class="demo-guide-progress">1 of 4 · Plan</div></div>
         <button id="closeDemoGuide" class="icon-button" title="Close demo guide" aria-label="Close demo guide">×</button>
       </header>
       <div id="demoGuideBody" class="demo-guide-body"></div>
       <footer class="demo-guide-footer">
-        <button id="demoGuideBack" class="ghost-button">Back</button>
-        <button id="demoGuideNext" class="primary-button">Next</button>
+        <button id="demoGuideExit" class="text-button">Exit demo</button>
+        <div><button id="demoGuideBack" class="ghost-button">Back</button><button id="demoGuideNext" class="primary-button">Next</button></div>
       </footer>
     </aside>
 
@@ -201,15 +208,16 @@
     </main>
   </section>
 
-  <script src="access-gate.js?v=gate1"></script>
-  <script src="chord-engine.js"></script>
-  <script src="structure-engine.js"></script>
-  <script src="utility-engine.js"></script>
-  <script src="notebook-engine.js"></script>
-  <script src="sandbox-data.js"></script>
-  <script src="field-exchange.js"></script>
-  <script src="review-capture.js"></script>
-  <script src="morning-lines.js"></script>
-  <script src="app.js"></script>
+  <script src="access-gate.js?v=0.4.0.7"></script>
+  <script src="chord-engine.js?v=0.4.0.7"></script>
+  <script src="structure-engine.js?v=0.4.0.7"></script>
+  <script src="utility-engine.js?v=0.4.0.7"></script>
+  <script src="notebook-engine.js?v=0.4.0.7"></script>
+  <script src="audio-trim-engine.js?v=0.4.0.7"></script>
+  <script src="sandbox-data.js?v=0.4.0.7"></script>
+  <script src="field-exchange.js?v=0.4.0.7"></script>
+  <script src="review-capture.js?v=0.4.0.7"></script>
+  <script src="morning-lines.js?v=0.4.0.7"></script>
+  <script src="app.js?v=0.4.0.7-intro1"></script>
 </body>
 </html>

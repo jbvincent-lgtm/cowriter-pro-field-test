@@ -72,6 +72,35 @@
       .filter(chord => chord.value && !seen.has(chord.id) && seen.add(chord.id));
   }
 
+  function repairLegacyChordStacks(chords, textLength = Infinity) {
+    const source = normaliseChords(chords, textLength).map((chord,index) => ({...chord,__index:index}));
+    const groups = new Map();
+    source.forEach(chord => {
+      if (!groups.has(chord.anchor)) groups.set(chord.anchor, []);
+      groups.get(chord.anchor).push(chord);
+    });
+    const repeated = new Map();
+    groups.forEach(group => {
+      if (group.length < 2) return;
+      const signature = group.map(chord => chord.value).sort().join('\u0000');
+      if (!repeated.has(signature)) repeated.set(signature, []);
+      repeated.get(signature).push(group);
+    });
+    const remove = new Set();
+    const preserve = new Set();
+    repeated.forEach(matches => {
+      if (matches.length < 2) return;
+      const keeper = matches.slice().sort((a,b)=>b.at(-1).__index-a.at(-1).__index)[0];
+      matches.forEach(group => group.forEach(chord => (group===keeper?preserve:remove).add(chord.id)));
+    });
+    groups.forEach(group => {
+      const remaining = group.filter(chord => !remove.has(chord.id));
+      if (remaining.length < 2 || remaining.every(chord => preserve.has(chord.id))) return;
+      remaining.slice(0,-1).forEach(chord => remove.add(chord.id));
+    });
+    return source.filter(chord => !remove.has(chord.id)).map(({__index,...chord}) => chord);
+  }
+
   function wordBoundaries(text) {
     const source = String(text || '');
     const points = [0];
@@ -203,6 +232,7 @@
     parseBracketLine,
     serialiseBracketLine,
     normaliseChords,
+    repairLegacyChordStacks,
     wordBoundaries,
     wordStarts,
     nearestBoundary,
