@@ -430,6 +430,7 @@ html,body{min-height:100%;min-height:100dvh}.app-shell{height:100vh;height:100dv
 
 @media(max-width:700px){
   .welcome-start-here{grid-column:1/-1}
+  .welcome-quiet-actions{gap:4px;justify-content:space-between;overflow:visible}.welcome-quiet-actions button{min-width:0;padding-inline:4px;font-size:9px}
   .utility-toolbar{gap:5px}.utility-toolbar .tool-group{min-width:0;gap:5px}.utility-toolbar .tool-group:first-child{flex:1}.utility-toolbar .tool-group:first-child .tool-button:nth-child(2){flex:1;min-width:0}.utility-toolbar .tool-group.right{flex:0 0 auto}.utility-toolbar .tool-button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .shape-mobile-intro{padding-bottom:13px}.shape-mobile-intro h2{font-size:24px}.shape-mobile-intro p{max-width:34ch}
   .shape-mobile-sections{gap:6px}.shape-mobile-section{overflow:hidden;scroll-margin-top:10px;border-color:color-mix(in srgb,var(--line) 68%,transparent)}
