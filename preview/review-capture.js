@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0.9';
+  const VERSION = '0.4.0.10';
   const encoder = new TextEncoder();
   const now = () => new Date().toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));
@@ -49,7 +49,7 @@
     const originalConsole = {};
 
     const panel = document.createElement('div');
-    panel.className = 'review-capture no-print';
+    panel.className = 'review-capture review-idle no-print';
     panel.innerHTML = '<button class="review-start">Start review</button><div class="review-active hidden"><span><i></i><b>Review</b> <small>0 captures</small></span><button class="review-shot">Capture</button><button class="review-issue">Mark issue</button><button class="review-export">Export ZIP</button><button class="review-stop" aria-label="Stop review">×</button></div>';
     document.body.append(panel);
     const startButton = panel.querySelector('.review-start');
@@ -87,6 +87,8 @@
     function onRejection(event) { session?.console.push({at:now(), level:'error', message:`Unhandled rejection: ${String(event.reason)}`}); }
 
     async function start() {
+      if (session) return;
+      panel.classList.remove('review-idle');
       session = {id:`review-${Date.now()}`, version:VERSION, startedAt:now(), startedMs:Date.now(), browser:{userAgent:navigator.userAgent, language:navigator.language, platform:navigator.platform, viewport:{width:innerWidth,height:innerHeight,devicePixelRatio}}, workflow:[], issues:[], screenshots:[], states:[], console:[]};
       sequence = 0;
       interceptConsole();
@@ -185,6 +187,7 @@
       session = null;
       active.classList.add('hidden');
       startButton.classList.remove('hidden');
+      panel.classList.add('review-idle');
       count.textContent = '0 captures';
     }
 
@@ -198,7 +201,7 @@
     panel.querySelector('.review-issue').onclick = markIssue;
     panel.querySelector('.review-export').onclick = exportZip;
     panel.querySelector('.review-stop').onclick = stop;
-    return {record};
+    return {record,start};
   }
 
   window.CoWriterReviewCapture = {create, zipStore, crc32};
