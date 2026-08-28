@@ -175,7 +175,15 @@
   function visualReview(){
     const song=lastLight();
     song.id=id('song');song.title='Visual Review Song';song.sandboxKey='visual-review';song.sandboxOrder=7;song.lastView='write';
-    song.plan.brainDump=`SCREENSHOT NOTEBOOK\n\nA deliberately complete song for reviewing Welcome, Ideas, Songs, Plan, Shape, Write, Words & Music, Alternatives and Chart without preparing content first.\n\nVisual anchors: porch light in rain; red dust on the case; a motel key; handwriting in the chart margin.\n\nReview path: capture Plan, arrange the labelled fragments in Shape, open Words & Music, select a chorus line and open Alternatives, then finish in Chart settings.`;
+    song.plan.brainDump=`SCREENSHOT NOTEBOOK\n\nA deliberately complete song for reviewing Welcome, Ideas, Songs, Plan, Write, Shape, Words & Music, Alternatives and Chart without preparing content first.\n\nVisual anchors: porch light in rain; red dust on the case; a motel key; handwriting in the chart margin.\n\nPhone Write acceptance: move the marked long line above the short line, undo, move it into Chorus, move a slash chord one word, reload, then confirm lyric order and chord anchors persist.\n\nReview path: capture Plan, edit and rearrange Write, arrange the labelled fragments in Shape, open Words & Music, select a chorus line and open Alternatives, then finish in Chart settings.`;
+    const verse=song.sections[0],chorus=song.sections[1];
+    const progression=line('| G | D/F# | Em7 Cadd9 | G/B D |','progression',{label:'Verse movement',demoKey:'mobile-progression-ribbon'});
+    const longLine=line('[G]The porch light kept a small and stubborn [D/F#]weather of its own when every other room went dark','lyric',{demoKey:'mobile-long-line'});
+    const shortLine=line('[Em7]Still on','lyric',{demoKey:'mobile-short-line'});
+    verse.lines.unshift(progression);
+    verse.lines.push(longLine,shortLine);
+    chorus.lines.push(line('| Cadd9 | G/B | Am7 | Dsus4 D |','progression',{label:'Chorus turnaround',demoKey:'mobile-chorus-ribbon'}));
+    lineAlt(song,longLine,'Tighter phone line','[G]The porch light made its [D/F#]own weather after dark');
     song.shapeBlocks.push(
       block('fragment','REVIEW: drag this loose line into Verse 2',1020,170,{shapeGroup:'Review markers'}),
       block('title','VISUAL REVIEW SONG',1020,330,{shapeGroup:'Review markers'}),
@@ -183,6 +191,7 @@
     );
     song.workbench.progression='| G | D/F# | Em7 | Cadd9 |\n| C | G/B | Am7 | D |';
     song.tuningNote='Visual review: Standard tuning, G shapes, no capo.';
+    song.mobileWriteAcceptance={sourceLineId:longLine.id,swapTargetLineId:shortLine.id,targetSectionId:chorus.id,progressionLineId:progression.id};
     song.favourite=true;
     addVersions(song,['Review baseline','Words & Music populated','Chart-ready review']);
     return song;

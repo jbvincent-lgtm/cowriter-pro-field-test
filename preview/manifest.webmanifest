@@ -1,7 +1,7 @@
 {
-  "id": "/cowriter-pro-field-test/preview/",
-  "name": "Co-Writer Preview",
-  "short_name": "Co-Writer Preview",
+  "id": "/",
+  "name": "Co-Writer",
+  "short_name": "Co-Writer",
   "description": "A songwriter's notebook for words, harmony and work tapes.",
   "start_url": "./",
   "scope": "./",

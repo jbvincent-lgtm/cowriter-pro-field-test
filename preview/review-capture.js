@@ -1,13 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0.10';
+  const VERSION = '0.4.0.12';
   const encoder = new TextEncoder();
   const now = () => new Date().toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));
   const safe = value => String(value ?? '').replace(/[<>]/g, character => character === '<' ? '&lt;' : '&gt;');
 
-  function crc32(bytes) {
+  function crc12(bytes) {
     let crc = -1;
     for (const byte of bytes) {
       crc ^= byte;
@@ -25,7 +25,7 @@
     Object.entries(files).forEach(([name, source]) => {
       const filename = encoder.encode(name);
       const data = source instanceof Uint8Array ? source : encoder.encode(String(source));
-      const crc = crc32(data);
+      const crc = crc12(data);
       const local = new Uint8Array([80,75,3,4,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(filename.length),0,0,...filename]);
       chunks.push(local, data);
       const central = new Uint8Array([80,75,1,2,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(filename.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(offset),...filename]);
@@ -204,5 +204,5 @@
     return {record,start};
   }
 
-  window.CoWriterReviewCapture = {create, zipStore, crc32};
+  window.CoWriterReviewCapture = {create, zipStore, crc12};
 })();
