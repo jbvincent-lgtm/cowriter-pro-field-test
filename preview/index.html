@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
   <script>document.documentElement.classList.add('access-locked')</script>
-  <link rel="stylesheet" href="styles.css?v=0.4.0.12-rc8" />
+  <link rel="stylesheet" href="styles.css?v=0.4.0.12-rc31" />
 </head>
 <body>
   <section id="accessGate" class="access-gate" aria-labelledby="accessGateTitle">
@@ -30,33 +30,63 @@
     </div>
   </section>
   <div id="app" class="app-shell page-welcome">
-    <section id="welcomePage" class="welcome-page" aria-label="Welcome">
+    <nav id="appNav" class="app-nav no-print" aria-label="Co-Writer navigation">
+      <button id="appNavBrand" class="app-nav-brand" title="Home" aria-label="Co-Writer Home">
+        <span class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></span>
+        <span>CO-WRITER</span>
+      </button>
+      <div class="app-nav-destinations">
+        <button id="appNavHome" data-page="welcome"><span aria-hidden="true">⌂</span><strong>Home</strong></button>
+        <button id="appNavIdeas" data-page="ideas"><span aria-hidden="true">✦</span><strong>Ideas</strong></button>
+        <button id="appNavSongs" data-page="library"><span aria-hidden="true">≡</span><strong>Songs</strong></button>
+      </div>
+      <button id="appNavNewIdea" class="app-nav-capture"><span aria-hidden="true">＋</span><strong>New idea</strong></button>
+      <button id="appNavMore" class="app-nav-more"><span aria-hidden="true">•••</span><strong>More</strong></button>
+    </nav>
+
+    <section id="welcomePage" class="welcome-page" aria-label="Home">
       <header class="welcome-brand">
         <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
-        <div><div class="wordmark">CO-WRITER</div><div class="alpha-mark">PRIVATE ALPHA</div></div>
+        <div><div class="wordmark">CO-WRITER</div><div class="home-heading">Home</div></div>
       </header>
       <main class="welcome-main">
         <div class="welcome-copy">
-          <p class="welcome-kicker">The page is ready.</p>
-          <h1>Begin with what you have.</h1>
-          <p class="welcome-note">A line, a chord, a title, or a half-finished thought.</p>
+          <p class="welcome-kicker">YOUR SONGWRITING NOTEBOOK</p>
+          <h1>What arrived?</h1>
+          <p class="welcome-note">Catch it before it needs to become a song.</p>
         </div>
+        <form id="welcomeCapture" class="home-capture">
+          <label for="welcomeIdeaInput">New idea</label>
+          <textarea id="welcomeIdeaInput" rows="1" placeholder="A line, title, chord or thought…" aria-label="New idea"></textarea>
+          <div class="home-capture-actions">
+            <button type="button" id="welcomeRecordIdea" class="text-button welcome-record">● Record</button>
+            <button type="submit" id="welcomeIdeaSave" class="primary-button" disabled>Save to Ideas</button>
+          </div>
+          <small id="welcomeIdeaStatus">No title or song details required.</small>
+        </form>
         <section id="welcomeContinueCard" class="continue-card hidden">
           <span>Continue writing</span>
           <strong id="welcomeContinueTitle">Untitled Song</strong>
           <small id="welcomeContinueMeta">Edited recently</small>
           <button type="button" id="welcomeContinue" class="primary-button">Open song</button>
         </section>
+        <section class="home-recent" aria-label="Recent work">
+          <div class="home-recent-section">
+            <header><strong>Recent ideas</strong><button type="button" id="welcomeIdeas" class="text-button">View all</button></header>
+            <div id="welcomeRecentIdeas" class="home-recent-list"></div>
+          </div>
+          <div class="home-recent-section">
+            <header><strong>Recent songs</strong><button type="button" id="welcomeLibrary" class="text-button">View all</button></header>
+            <div id="welcomeRecentSongs" class="home-recent-list"></div>
+          </div>
+        </section>
         <div class="welcome-actions">
           <div id="welcomeMainActions" class="welcome-main-actions">
-            <button type="button" id="welcomeNewIdea" class="primary-button">New idea</button>
-            <button type="button" id="welcomeIdeas" class="ghost-button">Ideas</button>
-            <button type="button" id="welcomeLibrary" class="ghost-button">Songs</button>
+            <button type="button" id="welcomeNewIdea" class="text-button">Open full idea editor</button>
+            <button type="button" id="welcomeNewSong" class="ghost-button">New song</button>
             <button type="button" id="welcomeGetStarted" class="ghost-button welcome-start-here">Start here</button>
           </div>
           <div id="welcomeQuietActions" class="welcome-quiet-actions" aria-label="Other ways to begin">
-            <button type="button" id="welcomeRecordIdea" class="text-button welcome-record">● Record an idea</button>
-            <button type="button" id="welcomeNewSong" class="text-button welcome-secondary">New song</button>
             <button type="button" id="welcomeMorningLines" class="text-button welcome-exercises">Exercises</button>
             <button type="button" id="welcomeMore" class="text-button welcome-secondary">More…</button>
             <button type="button" id="welcomeInstall" class="ghost-button welcome-overflow-action">Install for offline</button>
@@ -65,12 +95,12 @@
           </div>
         </div>
       </main>
-      <footer class="welcome-footer"><span>Co-Writer · Private Alpha</span><span id="welcomeConnection">Saved on this device</span></footer>
+      <footer class="welcome-footer"><span>Private Alpha</span><span id="welcomeConnection">Saved on this device</span></footer>
     </section>
 
     <section id="ideasPage" class="ideas-page hidden" aria-label="Ideas">
       <header class="ideas-header">
-        <button id="ideasHome" class="brand-lockup ideas-home" title="Welcome">
+        <button id="ideasHome" class="brand-lockup ideas-home" title="Home">
           <div class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></div>
           <div><div class="wordmark">CO-WRITER</div><div class="ideas-heading">Ideas</div></div>
         </button>
@@ -96,16 +126,16 @@
       </main>
     </section>
 
-    <aside id="sidebar" class="sidebar" aria-label="Song library">
+    <aside id="sidebar" class="sidebar" aria-label="Songs">
       <header class="sidebar-header">
-        <button id="libraryHome" class="brand-lockup library-home" title="Welcome">
+        <button id="libraryHome" class="brand-lockup library-home" title="Home">
           <div class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></div>
-          <div><div class="wordmark">CO-WRITER</div><div class="library-heading">Library</div></div>
+          <div><div class="wordmark">CO-WRITER</div><div class="library-heading">Songs</div></div>
         </button>
         <div class="library-header-actions">
           <span class="alpha-mark">PRIVATE ALPHA</span>
-          <button id="libraryMenu" class="icon-button" title="Library menu" aria-label="Library menu">•••</button>
-          <button id="collapseSidebar" class="icon-button" title="Close library" aria-label="Close library">×</button>
+          <button id="libraryMenu" class="icon-button" title="Songs menu" aria-label="Songs menu">•••</button>
+          <button id="collapseSidebar" class="icon-button" title="Return to song" aria-label="Return to song">×</button>
         </div>
       </header>
       <button id="newSong" class="primary-button full-width">New song</button>
@@ -114,7 +144,7 @@
         <button id="libraryFilterButton" class="text-button library-tool-button">Filter</button>
         <button id="librarySortButton" class="text-button library-tool-button">Recently edited</button>
       </div>
-      <nav id="libraryFilters" class="library-filters" aria-label="Library filters">
+      <nav id="libraryFilters" class="library-filters" aria-label="Song filters">
         <button data-filter="active" class="filter-button active">Working</button>
         <button data-filter="finished" class="filter-button">Finished</button>
         <button data-filter="favourite" class="filter-button">Favourites</button>
@@ -135,22 +165,23 @@
     <main id="mainShell" class="main-shell">
       <header class="topbar no-print">
         <div class="topbar-left">
-          <button id="expandSidebar" class="icon-button" title="Open library" aria-label="Open library">☰</button>
-          <button id="homeButton" class="topbar-brand" title="Welcome"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER</span></button>
+          <button id="expandSidebar" class="text-button song-back-button" title="Songs" aria-label="Back to Songs">← Songs</button>
+          <button id="homeButton" class="topbar-brand" title="Home"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER</span></button>
           <div id="saveState" class="save-state"></div><div id="fieldStatus" class="field-status">On this device</div>
         </div>
         <nav id="modeNav" class="mode-nav" aria-label="Song views">
           <div class="creative-modes">
-            <button data-view="plan">Plan</button>
-            <button data-view="write">Write</button>
-            <button data-view="shape">Shape</button>
+            <button data-view="plan" title="Plan · Option 1">Plan</button>
+            <button data-view="write" title="Write · Option 2">Write</button>
+            <button data-view="shape" title="Shape · Option 3">Shape</button>
           </div>
           <span class="mode-divider" aria-hidden="true"></span>
-          <button data-view="chart" class="chart-mode-button">Chart</button>
+          <button data-view="chart" class="chart-mode-button" title="Chart · Option 4">Chart</button>
         </nav>
         <div class="topbar-actions">
           <button id="undoButton" class="icon-button" title="Undo" aria-label="Undo">↶</button>
           <button id="redoButton" class="icon-button" title="Redo" aria-label="Redo">↷</button>
+          <button id="songNewIdea" class="text-button song-new-idea" title="Capture an unrelated idea">+ Idea</button>
           <button id="themeToggle" class="icon-button" title="Toggle appearance" aria-label="Toggle appearance">◐</button>
           <button id="shortcutsButton" class="icon-button shortcuts-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">?</button>
           <button id="songMenu" class="icon-button" title="Song menu" aria-label="Song menu">•••</button>
@@ -161,7 +192,7 @@
         <div class="empty-card">
           <div class="empty-kicker">CO-WRITER</div>
           <h1>Your first song starts with a blank page.</h1>
-          <div class="empty-actions"><button id="emptyNewSong" class="primary-button">New song</button><button id="emptyOpenLibrary" class="ghost-button">Open library</button></div>
+          <div class="empty-actions"><button id="emptyNewSong" class="primary-button">New song</button><button id="emptyOpenLibrary" class="ghost-button">Open Songs</button></div>
         </div>
       </section>
 
@@ -219,7 +250,7 @@
 
   <section id="morningLines" class="morning-lines hidden" aria-label="Exercises">
     <header class="morning-lines-header">
-      <button id="morningLinesClose" class="text-button">← Welcome</button>
+      <button id="morningLinesClose" class="text-button">← Home</button>
       <div><strong>EXERCISES</strong><span>Private writing practice</span></div>
       <button id="morningLinesNew" class="text-button">New page</button>
     </header>
@@ -249,6 +280,6 @@
   <script src="field-exchange.js?v=0.4.0.12"></script>
   <script src="review-capture.js?v=0.4.0.12"></script>
   <script src="morning-lines.js?v=0.4.0.12"></script>
-  <script src="app.js?v=0.4.0.12-rc8"></script>
+  <script src="app.js?v=0.4.0.12-rc31"></script>
 </body>
 </html>
