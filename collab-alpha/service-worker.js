@@ -1,7 +1,7 @@
 const SCOPE_PATH=new URL(self.registration.scope).pathname;
 const CHANNEL='collab-alpha';
 const CACHE_PREFIX=`co-writer-${CHANNEL}-`;
-const CACHE=`${CACHE_PREFIX}0.6.2-r1`;
+const CACHE=`${CACHE_PREFIX}0.6.3-r1`;
 const ownsCache=key=>key.startsWith(CACHE_PREFIX)||(CHANNEL==='stable'&&/^co-writer-\d/.test(key));
 const SHELL=['./','./index.html','./assets/cowriter.css','./assets/cowriter.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));

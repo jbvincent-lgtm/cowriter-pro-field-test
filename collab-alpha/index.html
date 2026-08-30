@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f0e8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Co-Writer Private Alpha 0.6.2</title>
+  <title>Co-Writer Private Alpha 0.6.3</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
@@ -170,6 +170,7 @@
           <button id="expandSidebar" class="text-button song-back-button" title="Songs" aria-label="Back to Songs">← Songs</button>
           <button id="homeButton" class="topbar-brand" title="Home"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER</span></button>
           <div id="saveState" class="save-state"></div><div id="fieldStatus" class="field-status">On this device</div>
+          <span id="stagingNotice" class="staging-notice hidden">COLLAB TEST</span>
         </div>
         <nav id="modeNav" class="mode-nav" aria-label="Song views">
           <div class="creative-modes">
@@ -181,6 +182,7 @@
           <button data-view="chart" class="chart-mode-button" title="Chart · Option 4">Chart</button>
         </nav>
         <div class="topbar-actions">
+          <button id="collaborationStatus" class="collaboration-status hidden" type="button" aria-live="polite">Connecting…</button>
           <button id="undoButton" class="icon-button" title="Undo" aria-label="Undo">↶</button>
           <button id="redoButton" class="icon-button" title="Redo" aria-label="Redo">↷</button>
           <button id="songNewIdea" class="text-button song-new-idea" title="Capture an unrelated idea">+ Idea</button>
