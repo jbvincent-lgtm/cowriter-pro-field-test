@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en" data-release-channel="collab-alpha">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f0e8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Co-Writer Private Alpha 0.6.2</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
+  <script>document.documentElement.classList.add('access-locked')</script>
+  <script type="module" crossorigin src="./assets/cowriter.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/cowriter.css">
+</head>
+<body>
+  <section id="accessGate" class="access-gate" aria-labelledby="accessGateTitle">
+    <div class="access-gate-card">
+      <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
+      <p class="access-gate-kicker">CO-WRITER · PRIVATE ALPHA</p>
+      <h1 id="accessGateTitle">Field test access</h1>
+      <p>Enter the field-test access code.</p>
+      <form id="accessGateForm">
+        <label for="accessGateCode">Access code</label>
+        <input id="accessGateCode" type="password" inputmode="text" autocomplete="current-password" autocapitalize="none" spellcheck="false" required />
+        <p id="accessGateError" class="access-gate-error" role="alert" aria-live="polite"></p>
+        <button type="submit" class="primary-button">Open notebook</button>
+      </form>
+      <small>This browser remembers the code.</small>
+    </div>
+  </section>
+  <div id="app" class="app-shell page-welcome">
+    <nav id="appNav" class="app-nav no-print" aria-label="Co-Writer navigation">
+      <button id="appNavBrand" class="app-nav-brand" title="Home" aria-label="Co-Writer Home">
+        <span class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></span>
+        <span>CO-WRITER</span>
+      </button>
+      <div class="app-nav-destinations">
+        <button id="appNavHome" data-page="welcome"><span aria-hidden="true">⌂</span><strong>Home</strong></button>
+        <button id="appNavIdeas" data-page="ideas"><span aria-hidden="true">✦</span><strong>Ideas</strong></button>
+        <button id="appNavSongs" data-page="library"><span aria-hidden="true">≡</span><strong>Songs</strong></button>
+      </div>
+      <button id="appNavNewIdea" class="app-nav-capture"><span aria-hidden="true">＋</span><strong>New idea</strong></button>
+      <button id="appNavMore" class="app-nav-more"><span aria-hidden="true">•••</span><strong>More</strong></button>
+    </nav>
+
+    <section id="welcomePage" class="welcome-page" aria-label="Home">
+      <header class="welcome-brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><i></i><i></i></div>
+        <div><div class="wordmark">CO-WRITER</div><div class="home-heading">Home</div></div>
+      </header>
+      <main class="welcome-main">
+        <div class="welcome-copy">
+          <h1>Capture an idea</h1>
+        </div>
+        <form id="welcomeCapture" class="home-capture">
+          <label for="welcomeIdeaInput" class="sr-only">New idea</label>
+          <textarea id="welcomeIdeaInput" rows="1" placeholder="A line, title, chord or thought…" aria-label="New idea"></textarea>
+          <div class="home-capture-actions">
+            <button type="button" id="welcomeRecordIdea" class="text-button welcome-record">● Record</button>
+            <button type="button" id="welcomePhotoIdea" class="text-button">Photo</button>
+            <button type="submit" id="welcomeIdeaSave" class="primary-button" disabled>Save idea</button>
+          </div>
+          <small id="welcomeIdeaStatus" aria-live="polite"></small>
+        </form>
+        <section id="welcomeContinueCard" class="continue-card hidden">
+          <span>Continue song</span>
+          <strong id="welcomeContinueTitle">Untitled Song</strong>
+          <small id="welcomeContinueMeta">Edited recently</small>
+          <button type="button" id="welcomeContinue" class="primary-button">Open song</button>
+        </section>
+        <section class="home-recent" aria-label="Recent work">
+          <div class="home-recent-section">
+            <header><strong>Recent ideas</strong><button type="button" id="welcomeIdeas" class="text-button">View all</button></header>
+            <div id="welcomeRecentIdeas" class="home-recent-list"></div>
+          </div>
+          <div class="home-recent-section">
+            <header><strong>Recent songs</strong><div class="home-recent-head-actions"><button type="button" id="welcomeNewSong" class="text-button">New song</button><button type="button" id="welcomeLibrary" class="text-button">View all</button></div></header>
+            <div id="welcomeRecentSongs" class="home-recent-list"></div>
+          </div>
+        </section>
+        <div class="welcome-actions">
+          <div id="welcomeMainActions" class="welcome-main-actions">
+            <button type="button" id="welcomeNewIdea" class="text-button">New idea</button>
+            <button type="button" id="welcomeGetStarted" class="ghost-button welcome-start-here">Guide</button>
+          </div>
+          <div id="welcomeQuietActions" class="welcome-quiet-actions" aria-label="More actions">
+            <button type="button" id="welcomeMorningLines" class="text-button welcome-exercises">Exercises</button>
+            <button type="button" id="welcomeMore" class="text-button welcome-secondary">More…</button>
+            <button type="button" id="welcomeInstall" class="ghost-button welcome-overflow-action">Install for offline</button>
+            <button type="button" id="welcomeDemo" class="text-button welcome-secondary welcome-overflow-action">Explore demo</button>
+            <button type="button" id="welcomeImport" class="text-button welcome-secondary welcome-overflow-action">Import</button>
+          </div>
+        </div>
+      </main>
+      <footer class="welcome-footer"><span>Private Alpha</span><span id="welcomeConnection">Saved on this device</span></footer>
+    </section>
+
+    <section id="ideasPage" class="ideas-page hidden" aria-label="Ideas">
+      <header class="ideas-header">
+        <button id="ideasHome" class="brand-lockup ideas-home" title="Home">
+          <div class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></div>
+          <div><div class="wordmark">CO-WRITER</div><div class="ideas-heading">Ideas</div></div>
+        </button>
+        <div class="ideas-header-actions">
+          <button id="ideasSongs" class="text-button">Songs</button>
+          <button id="ideasNew" class="primary-button">New idea</button>
+        </div>
+      </header>
+      <main class="ideas-main">
+        <div class="ideas-intro">
+          <h1>Ideas</h1>
+        </div>
+        <div class="ideas-tools">
+          <label class="search-wrap"><span class="sr-only">Search ideas</span><input id="ideaSearch" type="search" placeholder="Search ideas" /></label>
+          <nav id="ideaFilters" class="idea-filters" aria-label="Idea filters">
+            <button data-idea-filter="recent" class="active">Recent</button>
+            <button data-idea-filter="lyrics">Lyrics</button>
+            <button data-idea-filter="titles">Titles</button>
+            <button data-idea-filter="melodies">Melodies</button>
+            <button data-idea-filter="chords">Chords</button>
+            <button data-idea-filter="concepts">Concepts</button>
+          </nav>
+        </div>
+        <div id="ideaList" class="idea-list"></div>
+      </main>
+    </section>
+
+    <aside id="sidebar" class="sidebar" aria-label="Songs">
+      <header class="sidebar-header">
+        <button id="libraryHome" class="brand-lockup library-home" title="Home">
+          <div class="brand-mark small" aria-hidden="true"><span></span><i></i><i></i></div>
+          <div><div class="wordmark">CO-WRITER</div><div class="library-heading">Songs</div></div>
+        </button>
+        <div class="library-header-actions">
+          <span class="alpha-mark">PRIVATE ALPHA</span>
+          <button id="libraryMenu" class="icon-button" title="Songs menu" aria-label="Songs menu">•••</button>
+          <button id="collapseSidebar" class="icon-button" title="Return to song" aria-label="Return to song">×</button>
+        </div>
+      </header>
+      <button id="newSong" class="primary-button full-width">New song</button>
+      <label class="search-wrap"><span class="sr-only">Search songs</span><input id="songSearch" type="search" placeholder="Search songs" /></label>
+      <div id="libraryTools" class="library-tools">
+        <button id="libraryFilterButton" class="text-button library-tool-button">Filter</button>
+        <button id="librarySortButton" class="text-button library-tool-button">Recently edited</button>
+      </div>
+      <nav id="libraryFilters" class="library-filters" aria-label="Song filters">
+        <button data-filter="active" class="filter-button active">Working</button>
+        <button data-filter="finished" class="filter-button">Finished</button>
+        <button data-filter="favourite" class="filter-button">Favourites</button>
+        <button data-filter="shared" class="filter-button" hidden>Shared</button>
+        <button data-filter="archived" class="filter-button">Archive</button>
+      </nav>
+      <section id="projectsPanel" class="projects-panel" aria-label="Projects">
+        <header><span>Projects</span><button id="newProject" class="icon-button" title="New project" aria-label="New project">+</button></header>
+        <div id="projectList" class="project-list"></div>
+      </section>
+      <div id="songList" class="song-list" role="list"></div>
+      <footer class="sidebar-footer">
+        <button id="loadDemo" class="text-button">Explore demo</button>
+        <button id="importBackup" class="text-button">Import</button>
+        <button id="exportBackup" class="text-button">Backup</button>
+      </footer>
+    </aside>
+
+    <main id="mainShell" class="main-shell">
+      <header class="topbar no-print">
+        <div class="topbar-left">
+          <button id="expandSidebar" class="text-button song-back-button" title="Songs" aria-label="Back to Songs">← Songs</button>
+          <button id="homeButton" class="topbar-brand" title="Home"><span class="brand-mark tiny" aria-hidden="true"><span></span><i></i><i></i></span><span>CO-WRITER</span></button>
+          <div id="saveState" class="save-state"></div><div id="fieldStatus" class="field-status">On this device</div>
+        </div>
+        <nav id="modeNav" class="mode-nav" aria-label="Song views">
+          <div class="creative-modes">
+            <button data-view="plan" title="Plan · Option 1">Plan</button>
+            <button data-view="write" title="Write · Option 2">Write</button>
+            <button data-view="shape" title="Shape · Option 3">Shape</button>
+          </div>
+          <span class="mode-divider" aria-hidden="true"></span>
+          <button data-view="chart" class="chart-mode-button" title="Chart · Option 4">Chart</button>
+        </nav>
+        <div class="topbar-actions">
+          <button id="undoButton" class="icon-button" title="Undo" aria-label="Undo">↶</button>
+          <button id="redoButton" class="icon-button" title="Redo" aria-label="Redo">↷</button>
+          <button id="songNewIdea" class="text-button song-new-idea" title="Capture an unrelated idea">+ Idea</button>
+          <button id="themeToggle" class="icon-button" title="Toggle appearance" aria-label="Toggle appearance">◐</button>
+          <button id="shortcutsButton" class="icon-button shortcuts-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">?</button>
+          <button id="songMenu" class="icon-button" title="Song menu" aria-label="Song menu">•••</button>
+        </div>
+      </header>
+
+      <section id="emptyState" class="empty-state hidden">
+        <div class="empty-card">
+          <div class="empty-kicker">CO-WRITER</div>
+          <h1>No song open</h1>
+          <div class="empty-actions"><button id="emptyNewSong" class="primary-button">New song</button><button id="emptyOpenLibrary" class="ghost-button">Open Songs</button></div>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
+        <header class="song-shell-header no-print">
+          <input id="songTitle" class="song-title-input" value="Untitled Song" aria-label="Song title" />
+          <div id="songContext" class="song-context"></div>
+          <div class="work-tape-space" aria-hidden="true"></div>
+        </header>
+        <div id="utilityToolbar" class="utility-toolbar no-print" aria-label="View toolbar"></div>
+        <div id="viewHost" class="view-host"></div>
+      </section>
+    </main>
+
+    <aside id="workbench" class="workbench no-print" aria-label="Words and Music">
+      <div id="workbenchResize" class="workbench-resize" title="Resize Words and Music"></div>
+      <header class="workbench-header">
+        <div><div class="workbench-title">Words &amp; Music</div><div id="workbenchSubtitle" class="workbench-subtitle"></div></div>
+        <button id="closeWorkbench" class="icon-button" title="Hide Words and Music" aria-label="Hide Words and Music">×</button>
+      </header>
+      <nav id="workbenchTabs" class="workbench-tabs">
+        <button data-tab="words" class="active">Words</button>
+        <button data-tab="music">Music</button>
+      </nav>
+      <div id="workbenchBody" class="workbench-body"></div>
+    </aside>
+
+    <section id="alternativesTray" class="alternatives-tray no-print" aria-label="Alternatives">
+      <header class="alternatives-tray-header"><div><strong>Alternatives</strong><span id="alternativesTrayContext"></span></div><button id="closeAlternativesTray" class="icon-button" aria-label="Close alternatives">×</button></header>
+      <div id="alternativesTrayBody" class="alternatives-tray-body"></div>
+    </section>
+
+    <aside id="demoGuide" class="demo-guide no-print" aria-label="Guided tour">
+      <header class="demo-guide-header">
+        <div><div class="demo-guide-kicker">GUIDED TOUR</div><div id="demoGuideProgress" class="demo-guide-progress">1 of 4 · Plan</div></div>
+        <button id="closeDemoGuide" class="icon-button" title="Close guided tour" aria-label="Close guided tour">×</button>
+      </header>
+      <div id="demoGuideBody" class="demo-guide-body"></div>
+      <footer class="demo-guide-footer">
+        <button id="demoGuideExit" class="text-button">Exit demo</button>
+        <div><button id="demoGuideBack" class="ghost-button">Back</button><button id="demoGuideNext" class="primary-button">Next</button></div>
+      </footer>
+    </aside>
+
+    <div id="recordingTransport" class="recording-transport hidden" aria-hidden="true">
+      <span class="record-dot"></span><strong>Work tape</strong><time>00:00</time>
+      <button type="button" data-record-action="pause">Pause</button>
+      <button type="button" data-record-action="stop">Stop &amp; save</button>
+    </div>
+  </div>
+
+  <input id="backupFile" type="file" accept=".zip,.json,application/zip,application/json" hidden />
+  <input id="ideaPhotoFile" type="file" accept="image/*" capture="environment" hidden />
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="overlayLayer"></div>
+
+  <section id="morningLines" class="morning-lines hidden" aria-label="Exercises">
+    <header class="morning-lines-header">
+      <button id="morningLinesClose" class="text-button">← Home</button>
+      <div><strong>EXERCISES</strong><span>Private writing practice</span></div>
+      <button id="morningLinesNew" class="text-button">New page</button>
+    </header>
+    <div class="morning-lines-setup">
+      <label>Exercise<select id="morningLinesExercise"></select></label>
+      <p id="morningLinesPrompt"></p>
+      <div class="morning-lines-times" aria-label="Timer length">
+        <button data-minutes="5">5 min</button><button data-minutes="10">10 min</button><button data-minutes="15">15 min</button><button data-minutes="25">25 min</button>
+      </div>
+      <button id="morningLinesBegin" class="primary-button">Begin writing</button>
+    </div>
+    <main class="morning-lines-desk hidden">
+      <div class="morning-lines-status"><span id="morningLinesExerciseName"></span><time id="morningLinesTimer">05:00</time></div>
+      <textarea id="morningLinesEditor" spellcheck="true" autocapitalize="sentences" aria-label="Exercise page" placeholder="Start typing…"></textarea>
+      <footer><span id="morningLinesWords">0 words</span><span id="morningLinesSaved">Saved locally</span></footer>
+    </main>
+  </section>
+
+</body>
+</html>
