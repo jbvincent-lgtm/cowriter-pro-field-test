@@ -130,7 +130,7 @@
   }
 
   function paperCrown(){
-    const song=baseSong('Am','Paper Crown — Shape Desk',5,'developing');song.sandboxKey='paper-crown';song.lastView='shape';song.shapeView={panX:220,panY:120,zoom:.72};
+    const song=baseSong('Am','Paper Crown — Shape Canvas',5,'developing');song.sandboxKey='paper-crown';song.lastView='shape';song.shapeView={panX:220,panY:120,zoom:.72};
     song.plan.brainDump='A song about inheriting a role nobody actually wanted. Keep the images handmade: paper crown, kitchen-table kingdom, tape on the sceptre, names written on the back of receipts.';
     const a=['paper crown','kitchen kingdom','receipt-paper flag','tape on the sceptre','the chair at the head','a borrowed family name','gold pen running dry','the room after speeches','folded edges','rain through the cardboard','someone practising the wave','a throne beside the fridge'];
     const b=['You wore it lightly','Nobody voted for the king','The glue did not survive summer','We mistook duty for destiny','Every room had a smaller room inside','The crown fit everyone badly','A kingdom drawn in blue biro','The table knew the truth','We bowed because Dad laughed','The paper cut was real','Leave the title on the chair','No heir, only witnesses'];
@@ -203,7 +203,7 @@
     {key:'nothing-left',title:'Nothing Left to Prove — Lyric Workshop',purpose:'Long lyric editing'},
     {key:'northbound',title:'Northbound — Harmony Workshop',purpose:'Chord editing and Nashville'},
     {key:'halfway-home',title:'Halfway Home — Capo & Transposition',purpose:'Key, shapes, capo and modulation'},
-    {key:'paper-crown',title:'Paper Crown — Shape Desk',purpose:'Spatial movement stress'},
+    {key:'paper-crown',title:'Paper Crown — Shape Canvas',purpose:'Spatial movement stress'},
     {key:'stress-test',title:'Long Song Stress Test',purpose:'Scale and performance'},
     {key:'visual-review',title:'Visual Review Song',purpose:'Screenshot and workflow review'}
   ];

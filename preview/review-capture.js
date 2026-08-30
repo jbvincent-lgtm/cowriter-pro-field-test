@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0.12';
+  const VERSION = '0.4.0.19';
   const encoder = new TextEncoder();
   const now = () => new Date().toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));
@@ -50,7 +50,7 @@
 
     const panel = document.createElement('div');
     panel.className = 'review-capture review-idle no-print';
-    panel.innerHTML = '<button class="review-start">Start review</button><div class="review-active hidden"><span><i></i><b>Review</b> <small>0 captures</small></span><button class="review-shot">Capture</button><button class="review-issue">Mark issue</button><button class="review-export">Export ZIP</button><button class="review-stop" aria-label="Stop review">×</button></div>';
+    panel.innerHTML = '<button class="review-start">Start review</button><div class="review-active hidden"><span><i></i><b>Review</b> <small>0 screenshots</small></span><button class="review-shot">Screenshot</button><button class="review-issue">Report issue</button><button class="review-export">Export review</button><button class="review-stop" aria-label="Stop review">×</button></div>';
     document.body.append(panel);
     const startButton = panel.querySelector('.review-start');
     const active = panel.querySelector('.review-active');
@@ -133,9 +133,9 @@
       video.srcObject = null;
       const filename = `${String(session.screenshots.length + 1).padStart(3,'0')}-${cleanLabel}.png`;
       session.screenshots.push({filename, at:now(), context:context(), dataUrl:canvas.toDataURL('image/png'), stateFile});
-      count.textContent = `${session.screenshots.length} capture${session.screenshots.length === 1 ? '' : 's'}`;
+      count.textContent = `${session.screenshots.length} screenshot${session.screenshots.length === 1 ? '' : 's'}`;
       record('screenshot', {filename, stateFile, label});
-      options.notify?.('Review screenshot captured');
+      options.notify?.('Review screenshot saved');
       return filename;
     }
 
@@ -188,7 +188,7 @@
       active.classList.add('hidden');
       startButton.classList.remove('hidden');
       panel.classList.add('review-idle');
-      count.textContent = '0 captures';
+      count.textContent = '0 screenshots';
     }
 
     document.addEventListener('click', event => {
