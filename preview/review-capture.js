@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0.19';
+  const VERSION = '0.4.0.20';
   const encoder = new TextEncoder();
   const now = () => new Date().toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));

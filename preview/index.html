@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#f3f0e8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Co-Writer Private Alpha 0.4.0.19</title>
+  <title>Co-Writer Private Alpha 0.4.0.20</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3ea'/%3E%3Cpath d='M18 13v38M25 26h25M25 39h25' stroke='%2320211e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='18' r='4' fill='%237254b8'/%3E%3C/svg%3E" />
   <script>document.documentElement.classList.add('access-locked')</script>
-  <link rel="stylesheet" href="styles.css?v=0.4.0.19" />
+  <link rel="stylesheet" href="styles.css?v=0.4.0.20" />
 </head>
 <body>
   <section id="accessGate" class="access-gate" aria-labelledby="accessGateTitle">
@@ -58,6 +58,7 @@
           <textarea id="welcomeIdeaInput" rows="1" placeholder="A line, title, chord or thought…" aria-label="New idea"></textarea>
           <div class="home-capture-actions">
             <button type="button" id="welcomeRecordIdea" class="text-button welcome-record">● Record</button>
+            <button type="button" id="welcomePhotoIdea" class="text-button">Photo</button>
             <button type="submit" id="welcomeIdeaSave" class="primary-button" disabled>Save idea</button>
           </div>
           <small id="welcomeIdeaStatus" aria-live="polite"></small>
@@ -114,8 +115,11 @@
           <label class="search-wrap"><span class="sr-only">Search ideas</span><input id="ideaSearch" type="search" placeholder="Search ideas" /></label>
           <nav id="ideaFilters" class="idea-filters" aria-label="Idea filters">
             <button data-idea-filter="recent" class="active">Recent</button>
-            <button data-idea-filter="text">Text</button>
-            <button data-idea-filter="recordings">Recordings</button>
+            <button data-idea-filter="lyrics">Lyrics</button>
+            <button data-idea-filter="titles">Titles</button>
+            <button data-idea-filter="melodies">Melodies</button>
+            <button data-idea-filter="chords">Chords</button>
+            <button data-idea-filter="concepts">Concepts</button>
           </nav>
         </div>
         <div id="ideaList" class="idea-list"></div>
@@ -241,6 +245,7 @@
   </div>
 
   <input id="backupFile" type="file" accept=".zip,.json,application/zip,application/json" hidden />
+  <input id="ideaPhotoFile" type="file" accept="image/*" capture="environment" hidden />
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="overlayLayer"></div>
 
@@ -265,17 +270,17 @@
     </main>
   </section>
 
-  <script src="access-gate.js?v=0.4.0.19"></script>
-  <script src="chord-engine.js?v=0.4.0.19"></script>
-  <script src="structure-engine.js?v=0.4.0.19"></script>
-  <script src="utility-engine.js?v=0.4.0.19"></script>
-  <script src="notebook-engine.js?v=0.4.0.19"></script>
-  <script src="mobile-write-engine.js?v=0.4.0.19"></script>
-  <script src="audio-trim-engine.js?v=0.4.0.19"></script>
-  <script src="sandbox-data.js?v=0.4.0.19"></script>
-  <script src="field-exchange.js?v=0.4.0.19"></script>
-  <script src="review-capture.js?v=0.4.0.19"></script>
-  <script src="morning-lines.js?v=0.4.0.19"></script>
-  <script src="app.js?v=0.4.0.19"></script>
+  <script src="access-gate.js?v=0.4.0.20"></script>
+  <script src="chord-engine.js?v=0.4.0.20"></script>
+  <script src="structure-engine.js?v=0.4.0.20"></script>
+  <script src="utility-engine.js?v=0.4.0.20"></script>
+  <script src="notebook-engine.js?v=0.4.0.20"></script>
+  <script src="mobile-write-engine.js?v=0.4.0.20"></script>
+  <script src="audio-trim-engine.js?v=0.4.0.20"></script>
+  <script src="sandbox-data.js?v=0.4.0.20"></script>
+  <script src="field-exchange.js?v=0.4.0.20"></script>
+  <script src="review-capture.js?v=0.4.0.20"></script>
+  <script src="morning-lines.js?v=0.4.0.20"></script>
+  <script src="app.js?v=0.4.0.20"></script>
 </body>
 </html>

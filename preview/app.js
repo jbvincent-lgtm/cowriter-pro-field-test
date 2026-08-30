@@ -12,21 +12,23 @@
 
   const RELEASE_CHANNEL = document.documentElement.dataset.releaseChannel || 'stable';
   const DB_NAME = RELEASE_CHANNEL === 'stable' ? 'cowriter-pro-01' : `cowriter-pro-01-${RELEASE_CHANNEL}`;
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const STORE = 'app';
   const AUDIO_STORE = 'audio';
+  const ASSET_STORE = 'assets';
   const STATE_KEY = 'state';
-  const DEMO_SESSION_KEY = `cowriter-pro-demo-0.4.0.19${RELEASE_CHANNEL === 'stable' ? '' : `-${RELEASE_CHANNEL}`}`;
+  const DEMO_SESSION_KEY = `cowriter-pro-demo-0.4.0.20${RELEASE_CHANNEL === 'stable' ? '' : `-${RELEASE_CHANNEL}`}`;
   const KEYS = ['C','C#','Db','D','Eb','E','F','F#','Gb','G','Ab','A','Bb','B','Cm','C#m','Dm','Ebm','Em','Fm','F#m','Gm','Abm','Am','Bbm','Bm'];
   const SECTION_TYPES = ['Verse','Pre-Chorus','Chorus','Bridge','Refrain','Tag','Intro','Outro','Instrumental','Custom'];
   const STAGE_OPTIONS = [['idea','Idea'],['writing','Writing'],['draft','Draft'],['finished','Finished']];
+  const IDEA_KINDS = [['lyric','Lyrics'],['title','Titles'],['melody','Melodies'],['chord','Chords'],['concept','Concepts']];
   const BUILTIN_TUNINGS = ['Standard','E♭ Standard','D Standard','Drop D','Double Drop D','DADGAD','Open D','Open G','Open Em7 / G6','C Modal'];
   const SHAPE_SECTION_HEADER = 38;
   const SONG_VIEW_ORDER = ['plan','write','shape','chart'];
 
   const $ = id => document.getElementById(id);
   const els = Object.fromEntries([
-    'app','appNav','appNavBrand','appNavHome','appNavIdeas','appNavSongs','appNavNewIdea','appNavMore','welcomePage','welcomeContinueCard','welcomeContinueTitle','welcomeContinueMeta','welcomeContinue','welcomeCapture','welcomeIdeaInput','welcomeIdeaSave','welcomeIdeaStatus','welcomeRecentIdeas','welcomeRecentSongs','welcomeNewIdea','welcomeIdeas','welcomeNewSong','welcomeLibrary','welcomeGetStarted','welcomeMainActions','welcomeQuietActions','welcomeMorningLines','welcomeRecordIdea','welcomeMore','welcomeInstall','welcomeConnection','welcomeDemo','welcomeImport','ideasPage','ideasHome','ideasSongs','ideasNew','ideaSearch','ideaFilters','ideaList','sidebar','libraryHome','libraryMenu','collapseSidebar','expandSidebar','homeButton','mainShell','newSong','emptyNewSong','emptyOpenLibrary','songSearch','songList','libraryFilters','libraryTools','libraryFilterButton','librarySortButton','projectsPanel','projectList','newProject','loadDemo','importBackup','exportBackup','backupFile',
+    'app','appNav','appNavBrand','appNavHome','appNavIdeas','appNavSongs','appNavNewIdea','appNavMore','welcomePage','welcomeContinueCard','welcomeContinueTitle','welcomeContinueMeta','welcomeContinue','welcomeCapture','welcomeIdeaInput','welcomeIdeaSave','welcomeIdeaStatus','welcomeRecentIdeas','welcomeRecentSongs','welcomeNewIdea','welcomeIdeas','welcomeNewSong','welcomeLibrary','welcomeGetStarted','welcomeMainActions','welcomeQuietActions','welcomeMorningLines','welcomeRecordIdea','welcomePhotoIdea','welcomeMore','welcomeInstall','welcomeConnection','welcomeDemo','welcomeImport','ideasPage','ideasHome','ideasSongs','ideasNew','ideaSearch','ideaFilters','ideaList','sidebar','libraryHome','libraryMenu','collapseSidebar','expandSidebar','homeButton','mainShell','newSong','emptyNewSong','emptyOpenLibrary','songSearch','songList','libraryFilters','libraryTools','libraryFilterButton','librarySortButton','projectsPanel','projectList','newProject','loadDemo','importBackup','exportBackup','backupFile','ideaPhotoFile',
     'saveState','fieldStatus','modeNav','undoButton','redoButton','songNewIdea','themeToggle','shortcutsButton','songMenu','emptyState','workspace','songTitle','songContext','utilityToolbar','viewHost',
     'workbench','workbenchResize','workbenchSubtitle','closeWorkbench','workbenchTabs','workbenchBody','alternativesTray','alternativesTrayContext','alternativesTrayBody','closeAlternativesTray','demoGuide','demoGuideProgress','demoGuideBody','closeDemoGuide','demoGuideExit','demoGuideBack','demoGuideNext','recordingTransport','toast','overlayLayer'
   ].map(id => [id, $(id)]));
@@ -74,6 +76,8 @@
   let recordingTarget = null;
   let studioLogUrls = [];
   let ideaAudioUrls = [];
+  let ideaImageUrls = [];
+  let pendingPhotoIdeaId = null;
   let deferredInstallPrompt = null;
   let demoTourTimer = null;
   let mobileTouchDrag = null;
@@ -84,7 +88,7 @@
 
   function defaultState() {
     return {
-      schemaVersion: 14,
+      schemaVersion: 15,
       shellPage: 'welcome',
       selectedSongId: null,
       filter: 'active',
@@ -143,15 +147,15 @@
       createdAt, updatedAt:createdAt, lastView:'plan', viewMemory:{},
       shapeView:{panX:80,panY:55,zoom:1},
       workbench:{progression:'| 1 | 5/7 | 6m | 4 |'},
-      timeline:[], takes:[], exchangeHistory:[], sourceSongId:null, ideaLinks:[],
+      timeline:[], takes:[], attachmentIds:[], exchangeHistory:[], sourceSongId:null, ideaLinks:[],
       format:{fontFamily:'serif',textColor:'ink',fontSize:19,lineHeight:1.65,pageWidth:980},
       chartLayout:{fontFamily:'song',pageSize:'a4',orientation:'portrait',margin:'normal',columns:1,sectionSpacing:'normal',lineSpacing:'normal',showMeta:true}
     };
   }
 
-  function createIdea(text = '', takeIds = []) {
+  function createIdea(text = '', takeIds = [], kind = null, attachmentIds = []) {
     const createdAt = now();
-    return {id:uid('idea'),text:String(text||''),takeIds:[...new Set(takeIds)],createdAt,updatedAt:createdAt,favourite:false,usedInSongIds:[]};
+    return {id:uid('idea'),text:String(text||''),kind,attachmentIds:[...new Set(attachmentIds)],takeIds:[...new Set(takeIds)],createdAt,updatedAt:createdAt,favourite:false,usedInSongIds:[]};
   }
 
   function demoSong(stage = 'draft') {
@@ -251,6 +255,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
         const database = request.result;
         if (!database.objectStoreNames.contains(STORE)) database.createObjectStore(STORE);
         if (!database.objectStoreNames.contains(AUDIO_STORE)) database.createObjectStore(AUDIO_STORE);
+        if (!database.objectStoreNames.contains(ASSET_STORE)) database.createObjectStore(ASSET_STORE);
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -294,6 +299,35 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
       const tx=db.transaction(AUDIO_STORE,'readwrite');tx.objectStore(AUDIO_STORE).delete(key);
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
     });
+  }
+
+  function assetGet(key) {
+    return new Promise((resolve,reject) => {
+      const tx=db.transaction(ASSET_STORE,'readonly');const request=tx.objectStore(ASSET_STORE).get(key);
+      request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+    });
+  }
+
+  function assetSet(key,value) {
+    return new Promise((resolve,reject) => {
+      const tx=db.transaction(ASSET_STORE,'readwrite');tx.objectStore(ASSET_STORE).put(value,key);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+  }
+
+  function assetDelete(key) {
+    return new Promise((resolve,reject) => {
+      const tx=db.transaction(ASSET_STORE,'readwrite');tx.objectStore(ASSET_STORE).delete(key);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+  }
+
+  function assetBlob(record) {
+    if(record instanceof Blob)return record;
+    if(record?.blob instanceof Blob)return record.blob;
+    if(record?.bytes instanceof ArrayBuffer)return new Blob([record.bytes],{type:record.mimeType||'image/jpeg'});
+    if(record instanceof ArrayBuffer||ArrayBuffer.isView(record))return new Blob([record],{type:'image/jpeg'});
+    return null;
   }
 
   function normaliseLine(line, songKey) {
@@ -421,6 +455,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     song.workbench = {progression:oldWorkbench.progression || '| 1 | 5/7 | 6m | 4 |'};
     song.timeline = Array.isArray(song.timeline) ? song.timeline : [];
     song.takes = Array.isArray(song.takes) ? song.takes : [];
+    song.attachmentIds = Array.isArray(song.attachmentIds) ? [...new Set(song.attachmentIds)] : [];
     song.exchangeHistory = Array.isArray(song.exchangeHistory) ? song.exchangeHistory : [];
     song.sourceSongId ||= null;
     song.ideaLinks = Array.isArray(song.ideaLinks) ? song.ideaLinks.filter(link=>link&&link.ideaId).map(link=>({ideaId:link.ideaId,relation:link.relation==='saved'?'saved':'source',addedAt:link.addedAt||song.createdAt||now()})) : [];
@@ -441,18 +476,19 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
 
   function normaliseState(raw) {
     const result = {...defaultState(),...(raw || {})};
-    result.schemaVersion = 14;
+    result.schemaVersion = 15;
     result.songs = Array.isArray(result.songs) ? result.songs.map(normaliseSong) : [];
     result.deletedSongs = Array.isArray(result.deletedSongs) ? result.deletedSongs : [];
     result.unattachedTakes = Array.isArray(result.unattachedTakes) ? result.unattachedTakes : [];
     result.ideas = Array.isArray(result.ideas) ? result.ideas.map(idea=>({
-      id:idea?.id||uid('idea'),text:String(idea?.text||''),takeIds:Array.isArray(idea?.takeIds)?[...new Set(idea.takeIds)]:[],
+      id:idea?.id||uid('idea'),text:String(idea?.text||''),kind:IDEA_KINDS.some(([value])=>value===idea?.kind)?idea.kind:null,
+      attachmentIds:Array.isArray(idea?.attachmentIds)?[...new Set(idea.attachmentIds)]:[],takeIds:Array.isArray(idea?.takeIds)?[...new Set(idea.takeIds)]:[],
       createdAt:idea?.createdAt||now(),updatedAt:idea?.updatedAt||idea?.createdAt||now(),favourite:Boolean(idea?.favourite),
       usedInSongIds:Array.isArray(idea?.usedInSongIds)?[...new Set(idea.usedInSongIds)]:[]
     })) : [];
-    result.unattachedTakes.forEach(take=>{if(!result.ideas.some(idea=>idea.takeIds.includes(take.id)))result.ideas.push({id:`idea_${take.id}`,text:'',takeIds:[take.id],createdAt:take.createdAt||now(),updatedAt:take.createdAt||now(),favourite:false,usedInSongIds:[]});});
+    result.unattachedTakes.forEach(take=>{if(!result.ideas.some(idea=>idea.takeIds.includes(take.id)))result.ideas.push({id:`idea_${take.id}`,text:'',kind:null,attachmentIds:[],takeIds:[take.id],createdAt:take.createdAt||now(),updatedAt:take.createdAt||now(),favourite:false,usedInSongIds:[]});});
     result.ideas.forEach(idea=>idea.usedInSongIds.forEach(songId=>{const song=result.songs.find(item=>item.id===songId);if(song&&!song.ideaLinks.some(link=>link.ideaId===idea.id))song.ideaLinks.push({ideaId:idea.id,relation:'source',addedAt:idea.updatedAt||idea.createdAt||now()});}));
-    result.ideaFilter = ['recent','text','recordings'].includes(result.ideaFilter) ? result.ideaFilter : 'recent';
+    result.ideaFilter = ['recent',...IDEA_KINDS.map(([value])=>`${value}s`.replace('melodys','melodies'))].includes(result.ideaFilter) ? result.ideaFilter : 'recent';
     result.fieldProfile = result.fieldProfile && typeof result.fieldProfile==='object' ? result.fieldProfile : {name:''};
     result.fieldProfile.name = String(result.fieldProfile.name||'');
     result.projects = Array.isArray(result.projects) ? result.projects.map(project=>({id:project.id||uid('project'),name:String(project.name||'Project')})) : [];
@@ -650,23 +686,33 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     catch(error){console.error('Could not load work tape',error);row.classList.add('audio-missing');}
   }
 
-  function ideaTitle(idea){return idea.text.split(/\n/).map(line=>line.trim()).find(Boolean)?.slice(0,72)||'Audio idea';}
+  function ideaTitle(idea){return idea.text.split(/\n/).map(line=>line.trim()).find(Boolean)?.slice(0,72)||(idea.attachmentIds?.length?'Photo idea':'Audio idea');}
+  function ideaKindLabel(kind){return IDEA_KINDS.find(([value])=>value===kind)?.[1]?.replace(/s$/,'')||'Uncategorised';}
   function rememberOpenSong(){const song=currentSong();if(song&&state.shellPage==='workspace')rememberViewWorkspace(song,state.view);}
   function openHome(){rememberOpenSong();if(inDemoMode())exitDemo(false);state.shellPage='welcome';state.sidebarCollapsed=true;scheduleSave();render();requestAnimationFrame(()=>{window.scrollTo({top:0,behavior:'auto'});document.scrollingElement?.scrollTo({top:0,behavior:'auto'});els.welcomePage?.scrollTo({top:0,behavior:'auto'});});}
   function openIdeas(){rememberOpenSong();if(inDemoMode())exitDemo(false);state.shellPage='ideas';state.sidebarCollapsed=true;scheduleSave();render();}
   function openSongs(){rememberOpenSong();state.filter='active';state.shellPage='library';state.sidebarCollapsed=false;scheduleSave();render();}
   function openSong(song){if(!song)return;state.selectedSongId=song.id;state.view=song.lastView||'plan';state.shellPage='workspace';state.sidebarCollapsed=true;state.workbenchOpen=false;resetActiveSelection();scheduleSave();render();}
 
+  function captureIdeaPhoto(idea=null){pendingPhotoIdeaId=idea?.id||null;els.ideaPhotoFile.value='';els.ideaPhotoFile.click();}
+
+  async function saveIdeaPhoto(file){
+    if(!file)return;if(!String(file.type||'').startsWith('image/')){toast('Choose a photo or image');return;}if(file.size>25*1024*1024){toast('That image is larger than 25 MB');return;}
+    const bytes=await file.arrayBuffer(),mimeType=file.type||'image/jpeg';let idea=state.ideas.find(item=>item.id===pendingPhotoIdeaId);if(!idea){idea=createIdea();state.ideas.unshift(idea);}const id=uid('asset');await assetSet(id,{bytes,name:file.name||'Handwriting',mimeType,size:bytes.byteLength,createdAt:now()});idea.attachmentIds.push(id);idea.updatedAt=now();pendingPhotoIdeaId=null;state.shellPage='ideas';scheduleSave();render();openIdeaComposer(idea);toast('Photo added');
+  }
+
   function openIdeaComposer(existing=null){
     let idea=existing;const body=document.createElement('div');body.className='idea-composer';
     const input=document.createElement('textarea');input.rows=7;input.value=idea?.text||'';input.placeholder='Write a line, title, chord, or thought…';input.setAttribute('aria-label','Idea');
-    body.append(input);
     const ensureIdea=()=>{if(!idea){idea=createIdea();state.ideas.unshift(idea);}return idea;};
+    const kind=document.createElement('div');kind.className='idea-kind-picker';const kindLabel=document.createElement('span');kindLabel.textContent='Type (optional)';kind.append(kindLabel);[[null,'None'],...IDEA_KINDS].forEach(([value,label])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.className=(idea?.kind||null)===value?'active':'';button.onclick=()=>{const current=ensureIdea();current.kind=value;current.updatedAt=now();scheduleSave();kind.querySelectorAll('button').forEach(item=>item.classList.toggle('active',item===button));};kind.append(button);});
+    const media=document.createElement('small');media.className='idea-media-summary';const updateMedia=()=>{const photos=idea?.attachmentIds?.length||0,recordings=idea?.takeIds?.length||0;media.textContent=[photos?`${photos} ${photos===1?'photo':'photos'}`:'',recordings?`${recordings} ${recordings===1?'recording':'recordings'}`:''].filter(Boolean).join(' · ');};updateMedia();body.append(input,kind,media);
     input.oninput=()=>{const current=ensureIdea();current.text=input.value;current.updatedAt=now();scheduleSave();};
-    const cancel=document.createElement('button');cancel.className='ghost-button';cancel.textContent='Close';cancel.onclick=()=>{closeOverlay();if(idea&&(idea.text.trim()||idea.takeIds.length)){state.shellPage='ideas';scheduleSave();render();}};
+    const cancel=document.createElement('button');cancel.className='ghost-button';cancel.textContent='Close';cancel.onclick=()=>{closeOverlay();if(idea&&(idea.text.trim()||idea.takeIds.length||idea.attachmentIds.length)){state.shellPage='ideas';scheduleSave();render();}};
+    const photo=document.createElement('button');photo.className='ghost-button';photo.textContent='Photo';photo.onclick=()=>captureIdeaPhoto(ensureIdea());
     const record=document.createElement('button');record.className='ghost-button idea-record-button';record.textContent='● Record';record.onclick=()=>{const current=ensureIdea();current.text=input.value;current.updatedAt=now();scheduleSave();closeOverlay();startWorkTape(null,'ideas',current.id);};
-    const done=document.createElement('button');done.className='primary-button';done.textContent='Done';done.onclick=()=>{if(idea){idea.text=input.value;idea.updatedAt=now();if(!idea.text.trim()&&!idea.takeIds.length)state.ideas=state.ideas.filter(item=>item.id!==idea.id);}closeOverlay();state.shellPage='ideas';scheduleSave();render();};
-    const modal=openModal(existing?'Edit idea':'New idea',body,[cancel,record,done]);
+    const done=document.createElement('button');done.className='primary-button';done.textContent='Done';done.onclick=()=>{if(idea){idea.text=input.value;idea.updatedAt=now();if(!idea.text.trim()&&!idea.takeIds.length&&!idea.attachmentIds.length)state.ideas=state.ideas.filter(item=>item.id!==idea.id);}closeOverlay();state.shellPage='ideas';scheduleSave();render();};
+    const modal=openModal(existing?'Edit idea':'New idea',body,[cancel,photo,record,done]);
     modal.modal.querySelector('.modal-head .icon-button').onclick=done.onclick;modal.backdrop.onclick=event=>{if(event.target===modal.backdrop)done.onclick();};
     requestAnimationFrame(()=>input.focus());
   }
@@ -681,7 +727,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
 
   async function useIdeaInSong(idea,song,openAfter=true){
     const linked=song.ideaLinks.some(link=>link.ideaId===idea.id);const text=idea.text.trim();if(!linked&&text)song.plan.brainDump=[song.plan.brainDump.trim(),text].filter(Boolean).join('\n\n');
-    if(!linked)await copyIdeaTakesToSong(idea,song);if(!song.ideaLinks.some(link=>link.ideaId===idea.id))song.ideaLinks.push({ideaId:idea.id,relation:'source',addedAt:now()});if(!idea.usedInSongIds.includes(song.id))idea.usedInSongIds.push(song.id);idea.updatedAt=now();touch(song);
+    if(!linked)await copyIdeaTakesToSong(idea,song);idea.attachmentIds.forEach(id=>{if(!song.attachmentIds.includes(id))song.attachmentIds.push(id);});if(!song.ideaLinks.some(link=>link.ideaId===idea.id))song.ideaLinks.push({ideaId:idea.id,relation:'source',addedAt:now()});if(!idea.usedInSongIds.includes(song.id))idea.usedInSongIds.push(song.id);idea.updatedAt=now();touch(song);
     if(openAfter){state.selectedSongId=song.id;state.view='plan';state.shellPage='workspace';state.sidebarCollapsed=true;render();toast(linked?`Already connected to ${song.title}`:`Added to ${song.title}`);}
   }
 
@@ -695,8 +741,9 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
   }
 
   async function deleteIdea(idea){
-    if(!confirm(`Delete “${ideaTitle(idea)}”? Recordings stored only with this idea will also be removed from this device.`))return;
+    if(!confirm(`Delete “${ideaTitle(idea)}”? Media stored only with this idea will also be removed from this device.`))return;
     for(const takeId of idea.takeIds){await audioDelete(takeId);state.unattachedTakes=state.unattachedTakes.filter(take=>take.id!==takeId);}
+    for(const assetId of idea.attachmentIds){const usedByIdea=state.ideas.some(item=>item.id!==idea.id&&item.attachmentIds.includes(assetId));const usedBySong=state.songs.some(song=>song.attachmentIds.includes(assetId));if(!usedByIdea&&!usedBySong)await assetDelete(assetId);}
     state.ideas=state.ideas.filter(item=>item.id!==idea.id);state.songs.forEach(song=>song.ideaLinks=song.ideaLinks.filter(link=>link.ideaId!==idea.id));scheduleSave();renderIdeas();toast('Idea deleted');
   }
 
@@ -704,18 +751,23 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     try{const blob=await audioGet(take.id);if(!blob){wrap.textContent='Recording unavailable on this device';return;}const audio=document.createElement('audio');audio.controls=true;audio.preload='metadata';const url=URL.createObjectURL(blob);ideaAudioUrls.push(url);audio.src=url;const download=document.createElement('button');download.className='text-button';download.textContent='Download recording';download.onclick=()=>downloadBlob(`${safeName(take.name)}.${audioExtension(take)}`,blob);wrap.append(audio,download);}catch(error){console.error(error);wrap.textContent='Recording could not be opened';}
   }
 
+  async function populateIdeaImages(wrap,idea){
+    for(const id of idea.attachmentIds){try{const record=await assetGet(id),blob=assetBlob(record);if(!blob)continue;const url=URL.createObjectURL(blob);ideaImageUrls.push(url);const image=document.createElement('img');image.src=url;image.alt=record?.name||'Idea photo';image.loading='lazy';const open=document.createElement('button');open.type='button';open.className='idea-photo';open.append(image);open.onclick=()=>window.open(url,'_blank','noopener');wrap.append(open);}catch(error){console.error('Could not open idea photo',error);}}
+  }
+
   function renderIdeas(){
-    if(!els.ideaList)return;ideaAudioUrls.forEach(url=>URL.revokeObjectURL(url));ideaAudioUrls=[];els.ideaList.replaceChildren();
+    if(!els.ideaList)return;ideaAudioUrls.forEach(url=>URL.revokeObjectURL(url));ideaImageUrls.forEach(url=>URL.revokeObjectURL(url));ideaAudioUrls=[];ideaImageUrls=[];els.ideaList.replaceChildren();
     if(state.shellPage!=='ideas')return;
     [...els.ideaFilters.querySelectorAll('[data-idea-filter]')].forEach(button=>button.classList.toggle('active',button.dataset.ideaFilter===state.ideaFilter));
-    const query=els.ideaSearch.value.trim().toLowerCase();const ideas=state.ideas.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).filter(idea=>{
-      if(state.ideaFilter==='text'&&!idea.text.trim())return false;if(state.ideaFilter==='recordings'&&!idea.takeIds.length)return false;return !query||idea.text.toLowerCase().includes(query);
+    const query=els.ideaSearch.value.trim().toLowerCase(),kindFilter={lyrics:'lyric',titles:'title',melodies:'melody',chords:'chord',concepts:'concept'}[state.ideaFilter];const ideas=state.ideas.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).filter(idea=>{
+      if(kindFilter&&idea.kind!==kindFilter)return false;return !query||idea.text.toLowerCase().includes(query);
     });
     if(!ideas.length){const empty=document.createElement('section');empty.className='ideas-empty';empty.innerHTML=`<h2>${query?'No ideas found':'No ideas yet'}</h2>`;const add=document.createElement('button');add.className='primary-button';add.textContent='New idea';add.onclick=()=>openIdeaComposer();empty.append(add);els.ideaList.append(empty);return;}
     ideas.forEach(idea=>{const card=document.createElement('article');card.className='idea-card';
-      const usedSongs=idea.usedInSongIds.map(id=>state.songs.find(song=>song.id===id)?.title).filter(Boolean);const copy=document.createElement('button');copy.className='idea-card-copy';copy.onclick=()=>openIdeaComposer(idea);const text=idea.text.trim();copy.innerHTML=`<strong>${escapeHtml(ideaTitle(idea))}</strong>${text?`<p>${escapeHtml(text.slice(0,320))}</p>`:'<p class="idea-audio-label">Recorded idea</p>'}<small>${escapeHtml(relativeDate(idea.updatedAt))}${usedSongs.length?` · in ${escapeHtml(usedSongs.slice(0,2).join(' · '))}`:''}</small>`;
+      const usedSongs=idea.usedInSongIds.map(id=>state.songs.find(song=>song.id===id)?.title).filter(Boolean);const copy=document.createElement('button');copy.className='idea-card-copy';copy.onclick=()=>openIdeaComposer(idea);const text=idea.text.trim(),mediaLabel=idea.attachmentIds.length?'Photo idea':'Recorded idea';copy.innerHTML=`<strong>${escapeHtml(ideaTitle(idea))}</strong>${text?`<p>${escapeHtml(text.slice(0,320))}</p>`:`<p class="idea-audio-label">${mediaLabel}</p>`}<small>${idea.kind?`${escapeHtml(ideaKindLabel(idea.kind))} · `:''}${escapeHtml(relativeDate(idea.updatedAt))}${usedSongs.length?` · in ${escapeHtml(usedSongs.slice(0,2).join(' · '))}`:''}</small>`;
       const audio=document.createElement('div');audio.className='idea-card-audio';idea.takeIds.forEach(id=>{const take=state.unattachedTakes.find(item=>item.id===id);if(take)populateIdeaAudio(audio,take);});
-      const actions=document.createElement('div');actions.className='idea-card-actions';const edit=document.createElement('button');edit.className='text-button';edit.textContent='Edit';edit.onclick=()=>openIdeaComposer(idea);const turn=document.createElement('button');turn.className='primary-button';turn.textContent='Turn into song';turn.onclick=()=>turnIdeaIntoSong(idea);const use=document.createElement('button');use.className='ghost-button';use.textContent='Add to song';use.onclick=()=>chooseSongForIdea(idea);const more=document.createElement('button');more.className='icon-button';more.textContent='•••';more.title='Idea menu';more.onclick=()=>openMenu(more,[[idea.favourite?'Remove favourite':'Favourite',()=>{idea.favourite=!idea.favourite;idea.updatedAt=now();scheduleSave();renderIdeas();}],['Delete idea',()=>deleteIdea(idea),'danger']]);actions.append(edit,use,turn,more);card.append(copy);if(idea.takeIds.length)card.append(audio);card.append(actions);els.ideaList.append(card);});
+      const photos=document.createElement('div');photos.className='idea-card-photos';if(idea.attachmentIds.length)populateIdeaImages(photos,idea);
+      const actions=document.createElement('div');actions.className='idea-card-actions';const edit=document.createElement('button');edit.className='text-button';edit.textContent='Edit';edit.onclick=()=>openIdeaComposer(idea);const turn=document.createElement('button');turn.className='primary-button';turn.textContent='Turn into song';turn.onclick=()=>turnIdeaIntoSong(idea);const use=document.createElement('button');use.className='ghost-button';use.textContent='Add to song';use.onclick=()=>chooseSongForIdea(idea);const more=document.createElement('button');more.className='icon-button';more.textContent='•••';more.title='Idea menu';more.onclick=()=>openMenu(more,[[idea.favourite?'Remove favourite':'Favourite',()=>{idea.favourite=!idea.favourite;idea.updatedAt=now();scheduleSave();renderIdeas();}],['Delete idea',()=>deleteIdea(idea),'danger']]);actions.append(edit,use,turn,more);card.append(copy);if(idea.takeIds.length)card.append(audio);if(idea.attachmentIds.length)card.append(photos);card.append(actions);els.ideaList.append(card);});
   }
 
   function openStudioLog(song){
@@ -872,7 +924,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     if(!els.welcomeRecentIdeas||!els.welcomeRecentSongs)return;els.welcomeRecentIdeas.replaceChildren();els.welcomeRecentSongs.replaceChildren();
     const ideas=state.ideas.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,3);const songs=state.songs.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,3);
     const recent=els.welcomeRecentIdeas.closest('.home-recent');recent?.classList.toggle('has-ideas',Boolean(ideas.length));recent?.classList.toggle('has-songs',Boolean(songs.length));recent?.classList.toggle('all-empty',!ideas.length&&!songs.length);
-    ideas.forEach(idea=>{const button=document.createElement('button');button.className='home-recent-item';button.innerHTML=`<strong>${escapeHtml(ideaTitle(idea))}</strong><small>${escapeHtml(relativeDate(idea.updatedAt))}${idea.takeIds.length?' · recording':''}</small>`;button.onclick=()=>openIdeaComposer(idea);els.welcomeRecentIdeas.append(button);});
+    ideas.forEach(idea=>{const button=document.createElement('button');button.className='home-recent-item';const detail=[idea.kind?ideaKindLabel(idea.kind):'',relativeDate(idea.updatedAt),idea.takeIds.length?'recording':'',idea.attachmentIds.length?'photo':''].filter(Boolean).join(' · ');button.innerHTML=`<strong>${escapeHtml(ideaTitle(idea))}</strong><small>${escapeHtml(detail)}</small>`;button.onclick=()=>openIdeaComposer(idea);els.welcomeRecentIdeas.append(button);});
     songs.forEach(song=>{const button=document.createElement('button');button.className='home-recent-item';button.innerHTML=`<strong>${escapeHtml(song.title)}</strong><small>${escapeHtml(stageLabel(song.stage))} · ${escapeHtml(song.lastView[0].toUpperCase()+song.lastView.slice(1))}</small>`;button.onclick=()=>openSong(song);els.welcomeRecentSongs.append(button);});
   }
 
@@ -1679,7 +1731,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     addGroup('Spacing',[['sectionSpacing','Section spacing',layout.sectionSpacing,[['compact','Compact'],['normal','Normal'],['open','Open']]],['lineSpacing','Line spacing',layout.lineSpacing,[['compact','Compact'],['normal','Normal'],['open','Open']]],['showMeta','Song details',layout.showMeta?'yes':'no',[['yes','Show'],['no','Hide']]]]);
     const cancel=document.createElement('button');cancel.type='button';cancel.className='ghost-button';cancel.textContent='Cancel';cancel.onclick=closeOverlay;const done=document.createElement('button');done.type='button';done.className='primary-button';done.textContent='Done';done.onclick=()=>form.requestSubmit();form.onsubmit=event=>{event.preventDefault();state.chartFontSize=Number(fields.size.value);Object.assign(song.chartLayout,{fontFamily:fields.fontFamily.value,pageSize:fields.pageSize.value,orientation:fields.orientation.value,margin:fields.margin.value,columns:Number(fields.columns.value),sectionSpacing:fields.sectionSpacing.value,lineSpacing:fields.lineSpacing.value,showMeta:fields.showMeta.value==='yes'});touch(song);closeOverlay();renderView(song);};openModal('Chart layout',form,[cancel,done]);
   }
-  function openChartExport(song){openChoiceModal('Export chart',[['Print / PDF',()=>window.print()],['Plain text',()=>downloadText(`${safeName(song.title)}.txt`,chartText(song))],['Complete song bundle',()=>exportSongBundle(song)],['More export formats…',()=>openChoiceModal('More export formats',[['ChordPro',()=>downloadText(`${safeName(song.title)}.cho`,chordProText(song))],['Song metadata JSON',()=>downloadText(`${safeName(song.title)}.json`,JSON.stringify({type:'cowriter-song-0.4.0.19',song},null,2))]])]]);}
+  function openChartExport(song){openChoiceModal('Export chart',[['Print / PDF',()=>window.print()],['Plain text',()=>downloadText(`${safeName(song.title)}.txt`,chartText(song))],['Complete song bundle',()=>exportSongBundle(song)],['More export formats…',()=>openChoiceModal('More export formats',[['ChordPro',()=>downloadText(`${safeName(song.title)}.cho`,chordProText(song))],['Song metadata JSON',()=>downloadText(`${safeName(song.title)}.json`,JSON.stringify({type:'cowriter-song-0.4.0.20',song},null,2))]])]]);}
 
   function openKeyModal(song,anchor=null){
     if(anchor)openMenu(anchor,[['Transpose song…',()=>openTransposePanel(song,'song')],['Set song key without moving chords…',()=>openInterpretPanel(song,'song')],['Key/Capo…',()=>openKeyCapoPanel(song)]]);
@@ -1818,7 +1870,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
 
   function openSongMenu(anchor){
     const song=currentSong();if(!song)return;
-    if(inSandboxMode()){openMenu(anchor,[['Back to demo song',returnToDemoSong],['Reset this practice song',()=>{if(confirm(`Reset “${song.title}” to its starting version?`))resetCurrentSandboxSong();}],['Reset all practice songs',()=>{if(confirm('Reset all eight practice songs?'))resetSandboxLibrary();}],['Save copy to Songs',saveCurrentSandboxCopy],['Exit practice',()=>exitDemo(true)],['Transpose song…',()=>openTransposePanel(song,'song')],['Set song key without moving chords…',()=>openInterpretPanel(song,'song')],['Writers & IPI',()=>openWriters(song)],['Versions',()=>openVersions(song)],['Export song data (JSON)',()=>downloadText(`${safeName(song.title)}-sandbox.json`,JSON.stringify({type:'cowriter-song-0.4.0.19',song},null,2))]]);return;}
+    if(inSandboxMode()){openMenu(anchor,[['Back to demo song',returnToDemoSong],['Reset this practice song',()=>{if(confirm(`Reset “${song.title}” to its starting version?`))resetCurrentSandboxSong();}],['Reset all practice songs',()=>{if(confirm('Reset all eight practice songs?'))resetSandboxLibrary();}],['Save copy to Songs',saveCurrentSandboxCopy],['Exit practice',()=>exitDemo(true)],['Transpose song…',()=>openTransposePanel(song,'song')],['Set song key without moving chords…',()=>openInterpretPanel(song,'song')],['Writers & IPI',()=>openWriters(song)],['Versions',()=>openVersions(song)],['Export song data (JSON)',()=>downloadText(`${safeName(song.title)}-sandbox.json`,JSON.stringify({type:'cowriter-song-0.4.0.20',song},null,2))]]);return;}
     if(inDemoMode()){
       const tour=[[demoSession.guideOpen?'Pause tour':'Resume tour',()=>{demoSession.guideOpen=!demoSession.guideOpen;if(demoSession.guideOpen){demoSession.guideStep=clamp(demoSession.guideStep||0,0,DEMO_STEPS.length-1);state.view=DEMO_STEPS[demoSession.guideStep].view;}scheduleSave();render();}],['Restart tour',()=>{resetDemo();demoSession.guideOpen=true;state.view='plan';scheduleSave();render();}],['Choose song stage…',()=>openChoiceModal('Choose demo stage',[['Idea',()=>setDemoStage('idea')],['Draft',()=>setDemoStage('draft')],['Ready to share',()=>setDemoStage('chart-ready')]])]];
       const songTools=[['Player setup…',()=>openKeyCapoPanel(song)],['Transpose song…',()=>openTransposePanel(song,'song')],['Set song key without moving chords…',()=>openInterpretPanel(song,'song')],['Writers & IPI',()=>openWriters(song)],['Versions',()=>openVersions(song)]];
@@ -1828,7 +1880,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     const recordings=[['Record work tape',()=>startWorkTape(song)],['Open recordings & notes',()=>openStudioLog(song)]];
     const setup=[['Change progress…',()=>openStagePicker(song,anchor)],['Add to project…',()=>openProjectMembership(song)],['Transpose song…',()=>openTransposePanel(song,'song')],['Set song key without moving chords…',()=>openInterpretPanel(song,'song')],['Key, capo and tuning…',()=>openKeyCapoPanel(song)]];
     const people=[['Writers & IPI',()=>openWriters(song)],['Versions',()=>openVersions(song)],[song.favourite?'Remove favourite':'Favourite',()=>{song.favourite=!song.favourite;touch(song);render();}],['Duplicate song',()=>duplicateSong(song)]];
-    const exports=[['Export complete song…',()=>exportSongBundle(song)],['Song metadata JSON',()=>downloadText(`${safeName(song.title)}.json`,JSON.stringify({type:'cowriter-song-0.4.0.19',song},null,2))]];
+    const exports=[['Export complete song…',()=>exportSongBundle(song)],['Song metadata JSON',()=>downloadText(`${safeName(song.title)}.json`,JSON.stringify({type:'cowriter-song-0.4.0.20',song},null,2))]];
     const library=[['Archive',()=>{song.libraryStatus='archived';touch(song);render();}],['Move to Trash',()=>{snapshot('Move song to Trash');state.deletedSongs.unshift(song);state.songs=state.songs.filter(item=>item.id!==song.id);state.selectedSongId=state.songs[0]?.id||null;scheduleSave();render();toast('Song moved to Trash',undo);},'danger']];
     openChoicePopover(anchor,'Song tools',[['Recordings & notes',()=>openChoiceModal('Recordings & notes',recordings)],['Song setup',()=>openChoiceModal('Song setup',setup)],['Writers & versions',()=>openChoiceModal('Writers & versions',people)],['Export',()=>openChoiceModal('Export',exports)],['Song actions',()=>openChoiceModal('Song actions',library)]]);
   }
@@ -1844,7 +1896,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
 
   function openMenu(anchor,items){closeOverlay();const rect=anchor.getBoundingClientRect();const backdrop=document.createElement('div');backdrop.className='overlay-backdrop clear';const menu=document.createElement('div');menu.className='menu-popover';menu.style.visibility='hidden';items.forEach(([label,action,kind])=>{const button=document.createElement('button');button.textContent=label;if(kind==='danger')button.className='danger';button.onclick=()=>{closeOverlay();action();};menu.append(button);});backdrop.append(menu);backdrop.onclick=event=>{if(event.target===backdrop)closeOverlay();};els.overlayLayer.append(backdrop);const viewport=window.visualViewport;const viewLeft=viewport?.offsetLeft||0,viewTop=viewport?.offsetTop||0,viewWidth=viewport?.width||window.innerWidth,viewHeight=viewport?.height||window.innerHeight,margin=10;const width=Math.min(225,viewWidth-margin*2),availableHeight=Math.max(1,viewHeight-margin*2);menu.style.width=`${width}px`;menu.style.maxHeight=`${availableHeight}px`;const height=Math.min(menu.scrollHeight,availableHeight);const left=clamp(rect.right-width,viewLeft+margin,Math.max(viewLeft+margin,viewLeft+viewWidth-width-margin));const below=viewTop+viewHeight-rect.bottom-margin,above=rect.top-viewTop-margin;const preferredTop=below>=height?rect.bottom+6:above>=height?rect.top-height-6:viewTop+margin;const top=clamp(preferredTop,viewTop+margin,Math.max(viewTop+margin,viewTop+viewHeight-height-margin));menu.style.left=`${left}px`;menu.style.top=`${top}px`;menu.style.visibility='visible';}
   function openModal(title,body,footer=[]){closeOverlay();const backdrop=document.createElement('div');backdrop.className='overlay-backdrop';const modal=document.createElement('section');modal.className='modal';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');const head=document.createElement('header');head.className='modal-head';const heading=document.createElement('h3');heading.textContent=title;heading.id=uid('dialog-title');modal.setAttribute('aria-labelledby',heading.id);const close=document.createElement('button');close.className='icon-button';close.textContent='×';close.setAttribute('aria-label',`Close ${title}`);close.onclick=closeOverlay;head.append(heading,close);const content=document.createElement('div');content.className='modal-body';content.append(body);modal.append(head,content);if(footer.length){const foot=document.createElement('footer');foot.className='modal-foot';footer.forEach(item=>foot.append(item));modal.append(foot);}backdrop.append(modal);backdrop.onclick=event=>{if(event.target===backdrop)closeOverlay();};els.overlayLayer.append(backdrop);return{modal,content,backdrop};}
-  function openAbout(){const body=document.createElement('div');body.className='about-card';body.innerHTML='<strong>Co-Writer</strong><span>Private Alpha · 0.4.0.19</span><p>A songwriter’s notebook for capturing ideas, planning, writing, shaping and sharing songs.</p><small>Your songs, ideas and recordings are saved on this device.</small>';openModal('About',body);}
+  function openAbout(){const body=document.createElement('div');body.className='about-card';body.innerHTML='<strong>Co-Writer</strong><span>Private Alpha · 0.4.0.20</span><p>A songwriter’s notebook for capturing ideas, planning, writing, shaping and sharing songs.</p><small>Your songs, ideas, photos and recordings are saved on this device.</small>';openModal('About',body);}
   function startReviewCapture(){if(!reviewCaptureController?.start){toast('Review session is unavailable');return;}reviewCaptureController.start();toast('Review session started');}
   function openStartHere(){const body=document.createElement('div');body.className='start-here';body.innerHTML='<div class="start-here-path"><article><span>01</span><div><strong>Ideas</strong><p>Save text or a recording.</p></div></article><article><span>02</span><div><strong>Plan</strong><p>Add notes and rough lines.</p></div></article><article><span>03</span><div><strong>Write</strong><p>Edit lyrics and attach chords.</p></div></article><article><span>04</span><div><strong>Shape</strong><p>Reorder sections and loose lines.</p></div></article><article><span>05</span><div><strong>Chart</strong><p>Format and export a playing copy.</p></div></article></div>';const tour=document.createElement('button');tour.className='ghost-button';tour.textContent='Guided tour';tour.onclick=()=>{closeOverlay();enterDemo(true);};const capture=document.createElement('button');capture.className='ghost-button';capture.textContent='New idea';capture.onclick=()=>{closeOverlay();openIdeaComposer();};const begin=document.createElement('button');begin.className='primary-button';begin.textContent='New song';begin.onclick=()=>{closeOverlay();createNewSong();};openModal('Guide',body,[tour,capture,begin]);}
   function closeOverlay(){studioLogUrls.forEach(url=>URL.revokeObjectURL(url));studioLogUrls=[];els.overlayLayer.replaceChildren();}
@@ -1927,23 +1979,26 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
   }
 
   function audioExtension(take){return take?.mimeType?.includes('wav')?'wav':take?.mimeType?.includes('mp4')?'m4a':take?.mimeType?.includes('ogg')?'ogg':'webm';}
+  function imageExtension(record){const type=String(record?.mimeType||record?.blob?.type||'').toLowerCase();return type.includes('png')?'png':type.includes('webp')?'webp':type.includes('heic')?'heic':type.includes('gif')?'gif':'jpg';}
   function ensureFieldContributor(action){if(state.fieldProfile.name.trim()){action();return;}openFormModal('Who is carrying the notebook?',[{name:'name',label:'Your name',type:'text',placeholder:'Writer name',required:true}],values=>{state.fieldProfile.name=values.name.trim();scheduleSave();setTimeout(action);});}
   async function exportSongBundle(song){
     if(!FE){toast('Field Exchange could not start');return;}
     if(!state.fieldProfile.name.trim()){ensureFieldContributor(()=>exportSongBundle(song));return;}
     const exchangeId=uid('exchange'),createdAt=now(),contributor=state.fieldProfile.name.trim();
     song.exchangeHistory.push({id:exchangeId,type:'sent',at:createdAt,by:contributor,device:navigator.userAgent.slice(0,120)});song.timeline.unshift({id:uid('log'),type:'exchange',text:`Complete song bundle prepared by ${contributor}.`,createdAt,view:state.view});touch(song);
-    const files={},audio=[],missing=[];
-    for(const take of song.takes){const blob=await audioGet(take.id);if(!blob){missing.push(take.name);continue;}const suffix=String(take.id).split('_').at(-1).slice(-6);const path=`audio/${safeName(take.name||'Work tape')}-${suffix}.${audioExtension(take)}`;files[path]=new Uint8Array(await blob.arrayBuffer());audio.push({takeId:take.id,name:take.name,path,mimeType:take.mimeType,size:blob.size});}
-    const manifest={type:'cowriter-song-bundle',version:'0.4.0.19',exchangeId,createdAt,contributor,sourceSongId:song.sourceSongId||song.id,songId:song.id,title:song.title,audio,missingAudio:missing};
-    files['manifest.json']=JSON.stringify(manifest,null,2);files['song.json']=JSON.stringify(song,null,2);files['README.txt']=`Co-Writer 0.4.0.19 Field Exchange\n\nSong: ${song.title}\nSent by: ${contributor}\nCreated: ${new Date(createdAt).toLocaleString()}\n\nImport this .cowriter-song.zip from Home or Songs.\n${missing.length?`\nMissing audio: ${missing.join(', ')}\n`:''}`;
-    downloadBlob(`${safeName(song.title)}-${safeName(contributor)}.cowriter-song.zip`,FE.zipStore(files));toast(missing.length?`Song bundle exported; ${missing.length} tape${missing.length===1?' is':'s are'} missing on this device`:'Complete song bundle exported');
+    const files={},audio=[],attachments=[],missingMedia=[];
+    for(const take of song.takes){const blob=await audioGet(take.id);if(!blob){missingMedia.push(take.name||'Work tape');continue;}const suffix=String(take.id).split('_').at(-1).slice(-6);const path=`audio/${safeName(take.name||'Work tape')}-${suffix}.${audioExtension(take)}`;files[path]=new Uint8Array(await blob.arrayBuffer());audio.push({takeId:take.id,name:take.name,path,mimeType:take.mimeType,size:blob.size});}
+    for(const assetId of song.attachmentIds){const record=await assetGet(assetId),blob=assetBlob(record);if(!blob){missingMedia.push(record?.name||'Idea photo');continue;}const path=`images/${safeName(record?.name||'Idea photo')}-${String(assetId).slice(-6)}.${imageExtension(record)}`;files[path]=new Uint8Array(await blob.arrayBuffer());attachments.push({assetId,name:record?.name||'Idea photo',path,mimeType:record?.mimeType||blob.type,size:blob.size,createdAt:record?.createdAt||createdAt});}
+    const manifest={type:'cowriter-song-bundle',version:'0.4.0.20',exchangeId,createdAt,contributor,sourceSongId:song.sourceSongId||song.id,songId:song.id,title:song.title,audio,attachments,missingMedia};
+    files['manifest.json']=JSON.stringify(manifest,null,2);files['song.json']=JSON.stringify(song,null,2);files['README.txt']=`Co-Writer 0.4.0.20 Field Exchange\n\nSong: ${song.title}\nSent by: ${contributor}\nCreated: ${new Date(createdAt).toLocaleString()}\n\nImport this .cowriter-song.zip from Home or Songs.\n${missingMedia.length?`\nUnavailable media: ${missingMedia.join(', ')}\n`:''}`;
+    downloadBlob(`${safeName(song.title)}-${safeName(contributor)}.cowriter-song.zip`,FE.zipStore(files));toast(missingMedia.length?`Song bundle exported; ${missingMedia.length} media item${missingMedia.length===1?' is':'s are'} unavailable on this device`:'Complete song bundle exported');
   }
 
   async function applyImportedBundle(bundle,mode,existing){
     const incoming=normaliseSong(clone(bundle.song)),manifest=bundle.manifest,receivedAt=now(),contributor=manifest.contributor||'Another writer';
     await dbSet(`recovery-before-exchange-${Date.now()}`,clone(state));
     const takeIds=new Map();for(const take of incoming.takes){const previous=take.id,next=uid('take');take.id=next;takeIds.set(previous,next);const audioMeta=(manifest.audio||[]).find(item=>item.takeId===previous);if(audioMeta&&bundle.entries[audioMeta.path])await audioSet(next,new Blob([bundle.entries[audioMeta.path]],{type:audioMeta.mimeType||take.mimeType||'audio/webm'}));}
+    const assetIds=new Map();for(const meta of manifest.attachments||[]){const bytes=bundle.entries[meta.path];if(!bytes)continue;const next=uid('asset');await assetSet(next,{bytes:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),name:meta.name||'Idea photo',mimeType:meta.mimeType||'image/jpeg',size:bytes.byteLength,createdAt:meta.createdAt||receivedAt});assetIds.set(meta.assetId,next);}incoming.attachmentIds=incoming.attachmentIds.map(id=>assetIds.get(id)).filter(Boolean);
     incoming.timeline.forEach(entry=>{if(entry.takeId&&takeIds.has(entry.takeId))entry.takeId=takeIds.get(entry.takeId);});incoming.sourceSongId=manifest.sourceSongId||incoming.sourceSongId||incoming.id;incoming.exchangeHistory.push({id:uid('exchange'),type:'received',at:receivedAt,by:state.fieldProfile.name||'This device',from:contributor,exchangeId:manifest.exchangeId});incoming.timeline.unshift({id:uid('log'),type:'exchange',text:`Received complete song bundle from ${contributor}.`,createdAt:receivedAt,view:'field exchange'});incoming.updatedAt=receivedAt;
     if(mode==='replace'&&existing){const recovery={id:uid('version'),name:`Before exchange from ${contributor}`,createdAt:receivedAt,snapshot:snapshotSong(existing)};const id=existing.id;incoming.id=id;incoming.versions=[recovery,...(existing.versions||[]),...(incoming.versions||[])];Object.keys(existing).forEach(key=>delete existing[key]);Object.assign(existing,incoming);state.selectedSongId=id;}
     else{incoming.id=uid('song');state.songs.unshift(incoming);state.selectedSongId=incoming.id;}
@@ -1951,22 +2006,46 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
   }
 
   function openBundlePreview(bundle){
-    const {manifest}=bundle,incoming=normaliseSong(clone(bundle.song)),sourceId=manifest.sourceSongId||incoming.sourceSongId||incoming.id;const existing=state.songs.find(song=>song.id===sourceId||song.sourceSongId===sourceId);const lineCount=incoming.sections.reduce((sum,section)=>sum+section.lines.length,0),body=document.createElement('div');body.className='exchange-preview';body.innerHTML=`<div class="exchange-stamp"><span>FROM</span><strong>${escapeHtml(manifest.contributor||'Another writer')}</strong><small>${escapeHtml(new Date(manifest.createdAt||Date.now()).toLocaleString())}</small></div><dl><div><dt>Song</dt><dd>${escapeHtml(incoming.title)}</dd></div><div><dt>Material</dt><dd>${incoming.sections.length} sections · ${lineCount} lines</dd></div><div><dt>Work tapes</dt><dd>${incoming.takes.length} included</dd></div></dl>${manifest.missingAudio?.length?`<p class="exchange-warning">The sender reported ${manifest.missingAudio.length} unavailable recording${manifest.missingAudio.length===1?'':'s'}.</p>`:''}<p>No existing song will be silently overwritten. A recovery copy is saved before an update.</p>`;
+    const {manifest}=bundle,incoming=normaliseSong(clone(bundle.song)),sourceId=manifest.sourceSongId||incoming.sourceSongId||incoming.id;const existing=state.songs.find(song=>song.id===sourceId||song.sourceSongId===sourceId);const lineCount=incoming.sections.reduce((sum,section)=>sum+section.lines.length,0),missingMedia=manifest.missingMedia||manifest.missingAudio||[],body=document.createElement('div');body.className='exchange-preview';body.innerHTML=`<div class="exchange-stamp"><span>FROM</span><strong>${escapeHtml(manifest.contributor||'Another writer')}</strong><small>${escapeHtml(new Date(manifest.createdAt||Date.now()).toLocaleString())}</small></div><dl><div><dt>Song</dt><dd>${escapeHtml(incoming.title)}</dd></div><div><dt>Material</dt><dd>${incoming.sections.length} sections · ${lineCount} lines</dd></div><div><dt>Work tapes</dt><dd>${incoming.takes.length} included</dd></div><div><dt>Photos</dt><dd>${(manifest.attachments||[]).length} included</dd></div></dl>${missingMedia.length?`<p class="exchange-warning">The sender reported ${missingMedia.length} unavailable media item${missingMedia.length===1?'':'s'}.</p>`:''}<p>No existing song will be silently overwritten. A recovery copy is saved before an update.</p>`;
     const cancel=document.createElement('button');cancel.className='ghost-button';cancel.textContent='Cancel';cancel.onclick=closeOverlay;const add=document.createElement('button');add.className='primary-button';add.textContent=existing?'Add as separate copy':'Add to Songs';add.onclick=()=>{closeOverlay();applyImportedBundle(bundle,'copy',existing).catch(error=>{console.error(error);toast('The song bundle could not be imported');});};const footer=[cancel,add];if(existing){const replace=document.createElement('button');replace.className='ghost-button';replace.textContent='Update existing song';replace.onclick=()=>{closeOverlay();applyImportedBundle(bundle,'replace',existing).catch(error=>{console.error(error);toast('The song bundle could not be imported');});};footer.push(replace);}openModal('Review exchanged song',body,footer);
   }
 
-  async function importFieldBundle(file){const entries=await FE.parseStoredZip(file),manifest=FE.readJson(entries,'manifest.json'),song=FE.readJson(entries,'song.json');if(manifest.type!=='cowriter-song-bundle')throw new Error('Not a Co-Writer song bundle');openBundlePreview({entries,manifest,song});}
+  function allTakeMetadata(sourceState){const map=new Map();(sourceState.unattachedTakes||[]).forEach(take=>map.set(take.id,take));(sourceState.songs||[]).forEach(song=>(song.takes||[]).forEach(take=>map.set(take.id,take)));return [...map.values()];}
+  function allAttachmentIds(sourceState){return [...new Set([...(sourceState.ideas||[]).flatMap(idea=>idea.attachmentIds||[]),...(sourceState.songs||[]).flatMap(song=>song.attachmentIds||[])])];}
+
+  async function exportBackup(){
+    if(!FE){toast('Backup could not start');return;}
+    const exportedAt=now(),files={},audio=[],attachments=[],missingMedia=[];
+    for(const take of allTakeMetadata(state)){const blob=await audioGet(take.id);if(!(blob instanceof Blob)){missingMedia.push(take.name||'Work tape');continue;}const path=`audio/${safeName(take.name||'Work tape')}-${String(take.id).slice(-6)}.${audioExtension(take)}`;files[path]=new Uint8Array(await blob.arrayBuffer());audio.push({takeId:take.id,path,name:take.name||'Work tape',mimeType:take.mimeType||blob.type,size:blob.size});}
+    for(const assetId of allAttachmentIds(state)){const record=await assetGet(assetId),blob=assetBlob(record);if(!blob){missingMedia.push(record?.name||'Idea photo');continue;}const path=`images/${safeName(record?.name||'Idea photo')}-${String(assetId).slice(-6)}.${imageExtension(record)}`;files[path]=new Uint8Array(await blob.arrayBuffer());attachments.push({assetId,path,name:record?.name||'Idea photo',mimeType:record?.mimeType||blob.type,size:blob.size,createdAt:record?.createdAt||exportedAt});}
+    files['backup.json']=JSON.stringify({type:'cowriter-backup-bundle',version:'0.4.0.20',exportedAt,state:clone(state),audio,attachments,missingMedia},null,2);
+    files['README.txt']=`Co-Writer 0.4.0.20 Complete Backup\n\nCreated: ${new Date(exportedAt).toLocaleString()}\nSongs: ${state.songs.length}\nIdeas: ${state.ideas.length}\nWork tapes: ${audio.length}\nPhotos: ${attachments.length}\n\nImport this .cowriter-backup.zip from Co-Writer Home or Songs.\n${missingMedia.length?`\nUnavailable media: ${missingMedia.join(', ')}\n`:''}`;
+    downloadBlob(`Co-Writer-backup-${exportedAt.slice(0,10)}.cowriter-backup.zip`,FE.zipStore(files));toast(missingMedia.length?`Backup created; ${missingMedia.length} media item${missingMedia.length===1?' was':'s were'} unavailable`:'Complete backup created');
+  }
+
+  async function applyImportedBackup(bundle){
+    const imported=normaliseState(bundle.backup.state);await dbSet(`recovery-before-backup-import-${Date.now()}`,clone(state));
+    for(const meta of bundle.backup.audio||[]){const bytes=bundle.entries[meta.path];if(bytes)await audioSet(meta.takeId,new Blob([bytes],{type:meta.mimeType||'audio/webm'}));}
+    for(const meta of bundle.backup.attachments||[]){const bytes=bundle.entries[meta.path];if(!bytes)continue;await assetSet(meta.assetId,{bytes:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),name:meta.name||'Idea photo',mimeType:meta.mimeType||'image/jpeg',size:bytes.byteLength,createdAt:meta.createdAt||bundle.backup.exportedAt||now()});}
+    state=imported;state.workbenchOpen=false;state.alternativesTrayOpen=false;state.shellPage=state.songs.length?'library':state.ideas.length?'ideas':'welcome';scheduleSave();render();toast('Complete backup restored');
+  }
+
+  function openBackupPreview(bundle){
+    const backup=bundle.backup,backupState=normaliseState(clone(backup.state)),body=document.createElement('div');body.className='exchange-preview';body.innerHTML=`<dl><div><dt>Created</dt><dd>${escapeHtml(new Date(backup.exportedAt||Date.now()).toLocaleString())}</dd></div><div><dt>Songs</dt><dd>${backupState.songs.length}</dd></div><div><dt>Ideas</dt><dd>${backupState.ideas.length}</dd></div><div><dt>Work tapes</dt><dd>${(backup.audio||[]).length}</dd></div><div><dt>Photos</dt><dd>${(backup.attachments||[]).length}</dd></div></dl>${backup.missingMedia?.length?`<p class="exchange-warning">This backup reports ${backup.missingMedia.length} unavailable media item${backup.missingMedia.length===1?'':'s'}.</p>`:''}<p>Restoring replaces the current Library and Ideas on this device. A local recovery copy is saved first.</p>`;
+    const cancel=document.createElement('button');cancel.className='ghost-button';cancel.textContent='Cancel';cancel.onclick=closeOverlay;const restore=document.createElement('button');restore.className='primary-button';restore.textContent='Restore backup';restore.onclick=()=>{closeOverlay();applyImportedBackup(bundle).catch(error=>{console.error(error);toast('The backup could not be restored');});};openModal('Review complete backup',body,[cancel,restore]);
+  }
+
+  async function importFieldBundle(file){const entries=await FE.parseStoredZip(file);if(entries['backup.json']){const backup=FE.readJson(entries,'backup.json');if(backup.type!=='cowriter-backup-bundle')throw new Error('Not a Co-Writer backup');openBackupPreview({entries,backup});return;}const manifest=FE.readJson(entries,'manifest.json'),song=FE.readJson(entries,'song.json');if(manifest.type!=='cowriter-song-bundle')throw new Error('Not a Co-Writer song bundle');openBundlePreview({entries,manifest,song});}
   function importJsonFile(file){const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(reader.result);snapshot('Imported backup');if(parsed.song){const song=normaliseSong(parsed.song);state.songs.unshift(song);state.selectedSongId=song.id;}else if(parsed.state)state=normaliseState(parsed.state);else if(Array.isArray(parsed.songs))state=normaliseState(parsed);else throw new Error('Unknown format');scheduleSave();render();toast('Import complete');}catch(error){console.error(error);toast('That file could not be imported. Your Songs have not been changed.');}};reader.readAsText(file);}
   function importFile(file){if(!file)return;if(file.name.toLowerCase().endsWith('.zip')||file.type==='application/zip'){importFieldBundle(file).catch(error=>{console.error(error);toast(error.message||'That song bundle could not be read');});return;}importJsonFile(file);}
 
-  function exportBackup(){downloadText(`Co-Writer-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({type:'cowriter-pro-backup',version:'0.4.0.19',exportedAt:now(),audioNotice:'Use Export complete song for a transferable bundle containing work tapes.',state},null,2));}
   function downloadText(filename,text){const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
   function bind(){
     const continueWriting=()=>{const song=state.songs.find(item=>item.id===state.selectedSongId)||state.songs.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))[0];if(!song){createNewSong();return;}state.selectedSongId=song.id;state.view=song.lastView||'write';state.shellPage='workspace';state.sidebarCollapsed=true;state.workbenchOpen=false;scheduleSave();render();};
     const openLibrary=openSongs;
     const chooseImport=()=>{els.backupFile.value='';els.backupFile.click();};
-    const openAppMore=anchor=>openChoicePopover(anchor,'Co-Writer',[['Guide',openStartHere],['Exercises',()=>window.CoWriterMorningLines?.open()],['Explore demo',loadDemo],['Start review session',startReviewCapture],['Import song or backup…',chooseImport],['Back up song data',exportBackup],['Install for offline',installForOffline],['About',openAbout]]);
+    const openAppMore=anchor=>openChoicePopover(anchor,'Co-Writer',[['Guide',openStartHere],['Exercises',()=>window.CoWriterMorningLines?.open()],['Explore demo',loadDemo],['Start review session',startReviewCapture],['Import song or backup…',chooseImport],['Back up this device',exportBackup],['Install for offline',installForOffline],['About',openAbout]]);
     els.appNavBrand.onclick=openHome;els.appNavHome.onclick=openHome;els.appNavIdeas.onclick=openIdeas;els.appNavSongs.onclick=openSongs;els.appNavNewIdea.onclick=()=>openIdeaComposer();els.appNavMore.onclick=()=>openAppMore(els.appNavMore);
     els.newSong.onclick=createNewSong;els.emptyNewSong.onclick=createNewSong;els.welcomeNewSong.onclick=createNewSong;
     els.welcomeNewIdea.onclick=()=>openIdeaComposer();els.ideasNew.onclick=()=>openIdeaComposer();
@@ -1977,6 +2056,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     els.welcomeGetStarted.onclick=openStartHere;
     els.welcomeMorningLines.onclick=()=>window.CoWriterMorningLines?.open();
     els.welcomeRecordIdea.onclick=()=>startWorkTape(null,'welcome');
+    els.welcomePhotoIdea.onclick=()=>captureIdeaPhoto();
     els.welcomeInstall.onclick=installForOffline;
     els.welcomeDemo.onclick=()=>enterDemo(false);els.welcomeImport.onclick=chooseImport;
     els.welcomeMore.onclick=()=>openChoicePopover(els.welcomeMore,'More',[['Explore demo',()=>enterDemo(false)],['Play automatic tour',startUnattendedDemo],['Start review session',startReviewCapture],['Import song or backup…',chooseImport],['Install for offline',installForOffline],['About',openAbout]]);
@@ -1984,7 +2064,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     els.ideasHome.onclick=openHome;els.ideasSongs.onclick=openLibrary;
     els.ideaSearch.oninput=renderIdeas;els.ideaFilters.onclick=event=>{const button=event.target.closest('[data-idea-filter]');if(!button)return;state.ideaFilter=button.dataset.ideaFilter;scheduleSave();renderIdeas();};
     els.homeButton.onclick=openHome;els.libraryHome.onclick=openHome;els.songNewIdea.onclick=()=>openIdeaComposer();
-    els.libraryMenu.onclick=()=>openMenu(els.libraryMenu,[['Explore demo',loadDemo],['Start review session',startReviewCapture],['Import song or backup…',chooseImport],['Back up song data',exportBackup],['Install for offline',installForOffline],['About',openAbout]]);
+    els.libraryMenu.onclick=()=>openMenu(els.libraryMenu,[['Explore demo',loadDemo],['Start review session',startReviewCapture],['Import song or backup…',chooseImport],['Back up this device',exportBackup],['Install for offline',installForOffline],['About',openAbout]]);
     els.loadDemo.onclick=loadDemo;
     els.closeDemoGuide.onclick=pauseDemoGuide;els.demoGuideExit.onclick=leaveDemoForWelcome;els.demoGuideBack.onclick=()=>changeDemoGuideStep(-1);els.demoGuideNext.onclick=()=>changeDemoGuideStep(1);
     const takeOverTour=()=>{if(!demoTourTimer)return;stopUnattendedDemo();if(demoSession)demoSession.unattended=false;scheduleSave();renderDemoGuide();toast('Tour paused — you’re in control');};document.addEventListener('pointerdown',takeOverTour,true);document.addEventListener('keydown',takeOverTour,true);document.addEventListener('pointerdown',()=>{keyboardNavigation=false;},true);document.addEventListener('keydown',event=>{if(event.key==='Tab')keyboardNavigation=true;},true);
@@ -1995,7 +2075,7 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     els.modeNav.onclick=event=>{const button=event.target.closest('button[data-view]');if(!button)return;if(button.dataset.view===state.view&&phoneShapeLayout()){scrollWorkspaceToTop();return;}setView(button.dataset.view);};
     els.songTitle.oninput=()=>{const song=currentSong();if(!song)return;song.title=els.songTitle.value;touch(song);renderLibrary();els.workbenchSubtitle.textContent='';};
     els.undoButton.onclick=undo;els.redoButton.onclick=redo;els.themeToggle.onclick=()=>{state.theme=state.theme==='light'?'dark':'light';scheduleSave();render();};els.shortcutsButton.onclick=openShortcutsPanel;els.songMenu.onclick=()=>openSongMenu(els.songMenu);
-    els.exportBackup.onclick=exportBackup;els.importBackup.onclick=chooseImport;els.backupFile.onchange=()=>{const file=els.backupFile.files[0];if(file)importFile(file);els.backupFile.value='';};
+    els.exportBackup.onclick=exportBackup;els.importBackup.onclick=chooseImport;els.backupFile.onchange=()=>{const file=els.backupFile.files[0];if(file)importFile(file);els.backupFile.value='';};els.ideaPhotoFile.onchange=()=>{const file=els.ideaPhotoFile.files[0];if(file)saveIdeaPhoto(file).catch(error=>{console.error(error);toast('The photo could not be saved');});els.ideaPhotoFile.value='';};
     els.closeWorkbench.onclick=()=>{transientPanel=null;state.workbenchOpen=false;scheduleSave();render();};
     els.closeAlternativesTray.onclick=closeAlternativesTray;
     els.recordingTransport.onclick=event=>{const action=event.target.closest('[data-record-action]')?.dataset.recordAction;if(action==='pause')toggleRecordingPause();if(action==='stop')stopWorkTape();};
@@ -2043,6 +2123,6 @@ G – D/F# – Em7 – Cadd9. Keep the verse conversational. Let the bridge lift
     document.addEventListener('keyup',event=>{if(event.code==='Space')spaceHeld=false;});document.addEventListener('mousedown',event=>{if(selectionBar&&!event.target.closest('.selection-bar')&&!event.target.closest('textarea'))closeSelectionBar();});
   }
 
-  async function init(){bind();window.CoWriterMorningLines?.init();registerOfflineShell();db=await openDatabase();const loaded=await dbGet(STATE_KEY);const needsMigration=loaded&&Number(loaded.schemaVersion||0)<14;if(needsMigration)await dbSet('migration-backup-pre-0.4.0.9',loaded);state=normaliseState(loaded);state.workbenchOpen=false;state.alternativesTrayOpen=false;if(!state.songs.length){state.songs=[];state.selectedSongId=null;if(state.shellPage==='workspace'||state.shellPage==='library')state.shellPage=state.ideas.length?'ideas':'welcome';}else if(!state.songs.some(song=>song.id===state.selectedSongId))state.selectedSongId=state.songs[0].id;try{const savedDemo=JSON.parse(sessionStorage.getItem(DEMO_SESSION_KEY)||'null');if(savedDemo?.active&&(savedDemo.song||savedDemo.sandboxSongs)){demoSession=savedDemo;demoSession.mode ||= 'demo';if(savedDemo.song)demoSession.song=normaliseSong(savedDemo.song);if(Array.isArray(savedDemo.sandboxSongs))demoSession.sandboxSongs=savedDemo.sandboxSongs.map(normaliseSong);state.shellPage='workspace';}}catch(error){sessionStorage.removeItem(DEMO_SESSION_KEY);}if(currentSong())state.view=inSandboxMode()?currentSong().lastView||'write':inDemoMode()?(demoSession.guideOpen?DEMO_STEPS[demoSession.guideStep||0].view:demoSession.song.lastView||'write'):currentSong().lastView||state.view;render();reviewCaptureController=window.CoWriterReviewCapture?.create({getState:()=>runtimeSnapshot(),getContext:()=>{const song=currentSong();return{page:document.body.classList.contains('morning-lines-open')?'morning-lines':state.shellPage,view:state.view,songId:song?.id||null,songTitle:song?.title||null,shelf:state.workbenchOpen?state.workbenchTab:null,alternativesOpen:state.alternativesTrayOpen};},notify:toast})||null;}
+  async function init(){bind();window.CoWriterMorningLines?.init();registerOfflineShell();db=await openDatabase();const loaded=await dbGet(STATE_KEY);const needsMigration=loaded&&Number(loaded.schemaVersion||0)<15;if(needsMigration)await dbSet('migration-backup-pre-0.4.0.20',loaded);state=normaliseState(loaded);state.workbenchOpen=false;state.alternativesTrayOpen=false;if(!state.songs.length){state.songs=[];state.selectedSongId=null;if(state.shellPage==='workspace'||state.shellPage==='library')state.shellPage=state.ideas.length?'ideas':'welcome';}else if(!state.songs.some(song=>song.id===state.selectedSongId))state.selectedSongId=state.songs[0].id;try{const savedDemo=JSON.parse(sessionStorage.getItem(DEMO_SESSION_KEY)||'null');if(savedDemo?.active&&(savedDemo.song||savedDemo.sandboxSongs)){demoSession=savedDemo;demoSession.mode ||= 'demo';if(savedDemo.song)demoSession.song=normaliseSong(savedDemo.song);if(Array.isArray(savedDemo.sandboxSongs))demoSession.sandboxSongs=savedDemo.sandboxSongs.map(normaliseSong);state.shellPage='workspace';}}catch(error){sessionStorage.removeItem(DEMO_SESSION_KEY);}if(currentSong())state.view=inSandboxMode()?currentSong().lastView||'write':inDemoMode()?(demoSession.guideOpen?DEMO_STEPS[demoSession.guideStep||0].view:demoSession.song.lastView||'write'):currentSong().lastView||state.view;render();reviewCaptureController=window.CoWriterReviewCapture?.create({getState:()=>runtimeSnapshot(),getContext:()=>{const song=currentSong();return{page:document.body.classList.contains('morning-lines-open')?'morning-lines':state.shellPage,view:state.view,songId:song?.id||null,songTitle:song?.title||null,shelf:state.workbenchOpen?state.workbenchTab:null,alternativesOpen:state.alternativesTrayOpen};},notify:toast})||null;}
   init().catch(error=>{console.error(error);document.body.innerHTML='<pre style="padding:30px">Co-Writer could not start. Open the browser console for details.</pre>';});
 })();
