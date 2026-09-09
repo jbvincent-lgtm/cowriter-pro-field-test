@@ -1,5 +1,5 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "Co-Writer",
   "short_name": "Co-Writer",
   "description": "A songwriter's notebook for words, harmony and work tapes.",
@@ -10,7 +10,15 @@
   "theme_color": "#f3f0e8",
   "orientation": "any",
   "icons": [
-    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
